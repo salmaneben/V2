@@ -5,6 +5,21 @@ import { Loader2, CheckCircle, AlertCircle, Lock, Globe, Sparkles, Server, Brain
 import { testApiConnection } from '@/features/contentCreator/services/apiService';
 import { cn } from '@/lib/utils';
 
+// Define API endpoints and default models as constants
+const API_ENDPOINTS = {
+  PERPLEXITY: 'https://api.perplexity.ai/v2/chat/completions',
+  OPENAI: 'https://api.openai.com/v1/chat/completions',
+  CLAUDE: 'https://api.anthropic.com/v1/messages',
+  DEEPSEEK: 'https://api.deepseek.ai/v1/chat/completions'
+};
+
+const DEFAULT_MODELS = {
+  PERPLEXITY: 'llama-3.1-sonar-small-128k-online',
+  OPENAI: 'gpt-4o',
+  CLAUDE: 'claude-3-5-sonnet',
+  DEEPSEEK: 'deepseek-llm-67b-chat'
+};
+
 export interface APISettingsProps {
   onSettingsChange?: (settings: APISettingsState) => void;
 }
@@ -154,14 +169,14 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
           if (!settings.perplexityApiKey) {
             throw new Error('API key is required');
           }
-          const perplexityResponse = await fetch('https://api.perplexity.ai/v2/chat/completions', {
+          const perplexityResponse = await fetch(API_ENDPOINTS.PERPLEXITY, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${settings.perplexityApiKey}`,
             },
             body: JSON.stringify({
-              model: 'llama-3.1-sonar-small-128k-online',
+              model: DEFAULT_MODELS.PERPLEXITY,
               messages: [
                 { role: 'system', content: 'This is a connection test.' },
                 { role: 'user', content: 'Test connection' },
@@ -178,7 +193,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
           if (!settings.openaiApiKey) {
             throw new Error('API key is required');
           }
-          const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          const openaiResponse = await fetch(API_ENDPOINTS.OPENAI, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -203,7 +218,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
           if (!settings.claudeApiKey) {
             throw new Error('API key is required');
           }
-          const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          const claudeResponse = await fetch(API_ENDPOINTS.CLAUDE, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -226,7 +241,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
           if (!settings.deepseekApiKey) {
             throw new Error('API key is required');
           }
-          const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          const deepseekResponse = await fetch(API_ENDPOINTS.DEEPSEEK, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
