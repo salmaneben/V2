@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, CheckCircle, AlertCircle, Lock, Globe, Sparkles, Server, Brain, Cpu, Code } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, Lock, Globe, Sparkles, Server, Brain, Cpu } from 'lucide-react';
 import { testApiConnection } from '@/features/contentCreator/services/apiService';
 import { cn } from '@/lib/utils';
 
@@ -18,16 +18,13 @@ export interface APISettingsState {
   // Claude
   claudeApiKey: string;
   claudeModel: string;
-  // DeepSeek - New
-  deepseekApiKey: string;
-  deepseekModel: string;
   // Custom API
   customApiEndpoint: string;
   customApiKey: string;
   customApiModel: string;
   customApiVerify: boolean;
   // Preferred provider
-  preferredProvider: 'perplexity' | 'openai' | 'claude' | 'deepseek' | 'custom';
+  preferredProvider: 'perplexity' | 'openai' | 'claude' | 'custom';
 }
 
 interface TestStatus {
@@ -42,8 +39,6 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
     openaiModel: 'gpt-4o',
     claudeApiKey: '',
     claudeModel: 'claude-3-5-sonnet',
-    deepseekApiKey: '', // New
-    deepseekModel: 'deepseek-llm-67b-chat', // New
     customApiEndpoint: '',
     customApiKey: '',
     customApiModel: '',
@@ -55,7 +50,6 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
     perplexity: { status: 'idle', message: '' },
     openai: { status: 'idle', message: '' },
     claude: { status: 'idle', message: '' },
-    deepseek: { status: 'idle', message: '' }, // New
     custom: { status: 'idle', message: '' },
   });
 
@@ -75,14 +69,6 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
     { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet' },
   ];
 
-  // DeepSeek model options - New
-  const deepseekModelOptions = [
-    { value: 'deepseek-llm-67b-chat', label: 'DeepSeek LLM 67B Chat' },
-    { value: 'deepseek-coder-33b-instruct', label: 'DeepSeek Coder 33B' },
-    { value: 'deepseek-math-7b-instruct', label: 'DeepSeek Math 7B' },
-    { value: 'deepseek-llm-7b-chat', label: 'DeepSeek LLM 7B Chat' },
-  ];
-
   // Load saved settings on component mount
   useEffect(() => {
     const loadedSettings: Partial<APISettingsState> = {};
@@ -97,10 +83,6 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
     // Load Claude settings
     loadedSettings.claudeApiKey = localStorage.getItem('claude_api_key') || '';
     loadedSettings.claudeModel = localStorage.getItem('claude_model') || 'claude-3-5-sonnet';
-
-    // Load DeepSeek settings - New
-    loadedSettings.deepseekApiKey = localStorage.getItem('deepseek_api_key') || '';
-    loadedSettings.deepseekModel = localStorage.getItem('deepseek_model') || 'deepseek-llm-67b-chat';
 
     // Load Custom API settings
     loadedSettings.customApiEndpoint = localStorage.getItem('custom_api_endpoint') || '';
@@ -154,7 +136,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
           if (!settings.perplexityApiKey) {
             throw new Error('API key is required');
           }
-          const perplexityResponse = await fetch('https://api.perplexity.ai/v2/chat/completions', {
+          const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -166,6 +148,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
                 { role: 'system', content: 'This is a connection test.' },
                 { role: 'user', content: 'Test connection' },
               ],
+              max_tokens: 10,
             }),
           });
           if (!perplexityResponse.ok) {
@@ -208,7 +191,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
             headers: {
               'Content-Type': 'application/json',
               'x-api-key': settings.claudeApiKey,
-              'anthropic-version': '2023-01-01',
+              'anthropic-version': '2023-06-01',
             },
             body: JSON.stringify({
               model: settings.claudeModel,
@@ -218,31 +201,6 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
           });
           if (!claudeResponse.ok) {
             throw new Error(`API returned status ${claudeResponse.status}`);
-          }
-          result.success = true;
-          break;
-
-        case 'deepseek':
-          if (!settings.deepseekApiKey) {
-            throw new Error('API key is required');
-          }
-          const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${settings.deepseekApiKey}`,
-            },
-            body: JSON.stringify({
-              model: settings.deepseekModel,
-              messages: [
-                { role: 'system', content: 'This is a connection test.' },
-                { role: 'user', content: 'Test connection' },
-              ],
-              max_tokens: 10,
-            }),
-          });
-          if (!deepseekResponse.ok) {
-            throw new Error(`API returned status ${deepseekResponse.status}`);
           }
           result.success = true;
           break;
@@ -282,7 +240,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold">API Settings</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <button
           type="button"
           className={cn(
@@ -323,21 +281,6 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
         >
           <Cpu className="h-6 w-6" />
           <span className="text-sm font-medium">Claude</span>
-        </button>
-
-        {/* New DeepSeek button */}
-        <button
-          type="button"
-          className={cn(
-            "p-3 rounded-md flex flex-col items-center justify-center gap-2 border transition-colors",
-            settings.preferredProvider === 'deepseek'
-              ? 'bg-indigo-50 border-indigo-300 text-indigo-800'
-              : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100',
-          )}
-          onClick={() => setPreferredProvider('deepseek')}
-        >
-          <Code className="h-6 w-6" />
-          <span className="text-sm font-medium">DeepSeek</span>
         </button>
 
         <button
@@ -583,89 +526,6 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
                   testStatus.claude.status === 'success' ? 'text-green-600' : 'text-red-600',
                 )}>
                   {testStatus.claude.message}
-                </div>
-              )}
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* DeepSeek API Section - New */}
-      {settings.preferredProvider === 'deepseek' && (
-        <Card className="p-6">
-          <div className="flex items-center mb-4 gap-2">
-            <Code className="h-5 w-5 text-indigo-500" />
-            <h3 className="text-xl font-semibold">DeepSeek API</h3>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">API Key</label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={settings.deepseekApiKey}
-                  onChange={(e) => saveSettings({ deepseekApiKey: e.target.value })}
-                  placeholder="Enter your DeepSeek API key"
-                  className="w-full p-3 pl-10 border border-gray-300 rounded-lg"
-                />
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Model</label>
-              <select
-                value={settings.deepseekModel}
-                onChange={(e) => saveSettings({ deepseekModel: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              >
-                {deepseekModelOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Button
-                type="button"
-                onClick={() => testApiConnection('deepseek')}
-                disabled={testStatus.deepseek.status === 'testing'}
-                className={cn(
-                  "w-full p-3 flex justify-center items-center rounded-md text-white",
-                  testStatus.deepseek.status === 'testing'
-                    ? 'bg-indigo-400'
-                    : testStatus.deepseek.status === 'success'
-                      ? 'bg-green-600 hover:bg-green-700'
-                      : testStatus.deepseek.status === 'error'
-                        ? 'bg-red-600 hover:bg-red-700'
-                        : 'bg-indigo-600 hover:bg-indigo-700',
-                )}
-              >
-                {testStatus.deepseek.status === 'testing' ? (
-                  <>
-                    <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                    Testing...
-                  </>
-                ) : testStatus.deepseek.status === 'success' ? (
-                  <>
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Connection Successful
-                  </>
-                ) : testStatus.deepseek.status === 'error' ? (
-                  <>
-                    <AlertCircle className="h-5 w-5 mr-2" />
-                    Test Connection Again
-                  </>
-                ) : (
-                  'Test DeepSeek API Connection'
-                )}
-              </Button>
-              {testStatus.deepseek.status !== 'idle' && (
-                <div className={cn(
-                  "mt-2 text-sm",
-                  testStatus.deepseek.status === 'success' ? 'text-green-600' : 'text-red-600',
-                )}>
-                  {testStatus.deepseek.message}
                 </div>
               )}
             </div>

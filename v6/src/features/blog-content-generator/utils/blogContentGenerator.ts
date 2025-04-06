@@ -16,48 +16,60 @@ import {
   Provider
 } from '../types';
 
-// Helper function to get API configuration based on provider
-const getApiConfig = (provider: Provider = 'perplexity') => {
+// Helper function to get API configuration based on provider and model
+const getApiConfig = (provider: Provider = 'perplexity', model?: string) => {
   let apiKey = '';
-  let model = '';
   let endpoint = '';
-
+  let selectedModel = model || '';
+  
+  // First try to get the API key specific to the provider
   switch (provider) {
     case 'perplexity':
       apiKey = localStorage.getItem('perplexity_api_key') || '';
-      model = 'llama-3.1-sonar-small-128k-online';
       endpoint = 'https://api.perplexity.ai/chat/completions';
+      selectedModel = model || localStorage.getItem('perplexity_model') || 'llama-3.1-sonar-small-128k-online';
       break;
 
     case 'openai':
       apiKey = localStorage.getItem('openai_api_key') || '';
-      model = localStorage.getItem('openai_model') || 'gpt-4o';
       endpoint = 'https://api.openai.com/v1/chat/completions';
+      selectedModel = model || localStorage.getItem('openai_model') || 'gpt-4o';
       break;
 
     case 'claude':
       apiKey = localStorage.getItem('claude_api_key') || '';
-      model = localStorage.getItem('claude_model') || 'claude-3-5-sonnet';
       endpoint = 'https://api.anthropic.com/v1/messages';
+      selectedModel = model || localStorage.getItem('claude_model') || 'claude-3-5-sonnet';
       break;
       
     case 'deepseek':
       apiKey = localStorage.getItem('deepseek_api_key') || '';
-      model = localStorage.getItem('deepseek_model') || 'deepseek-chat';
       endpoint = 'https://api.deepseek.ai/v1/chat/completions';
+      selectedModel = model || localStorage.getItem('deepseek_model') || 'deepseek-chat';
       break;
 
     case 'custom':
       apiKey = localStorage.getItem('custom_api_key') || '';
-      model = localStorage.getItem('custom_api_model') || '';
       endpoint = localStorage.getItem('custom_api_endpoint') || '';
+      selectedModel = model || localStorage.getItem('custom_api_model') || '';
       break;
 
     default:
       throw new Error('Invalid provider selected');
   }
 
-  return { apiKey, model, endpoint, provider };
+  // If no API key is found specifically for the provider, try the global API key
+  if (!apiKey) {
+    apiKey = localStorage.getItem('api_key') || '';
+  }
+
+  return { 
+    apiKey, 
+    model: selectedModel, 
+    endpoint, 
+    provider,
+    verifySSL: provider !== 'custom' || localStorage.getItem('custom_api_verify') !== 'false'
+  };
 };
 
 // Process API response based on provider
@@ -82,7 +94,10 @@ export const generateMetaTitles = async (
 ): Promise<MetaTitleGeneratorResponse> => {
   try {
     const provider = params.provider || localStorage.getItem('preferred_provider') as Provider || 'perplexity';
-    const { apiKey, model, endpoint } = getApiConfig(provider);
+    const { apiKey, model, endpoint } = getApiConfig(
+      provider, 
+      params.apiConfig?.model || localStorage.getItem(`preferred_model_titleApiModel`) || undefined
+    );
     
     if (!apiKey) {
       return {
@@ -167,7 +182,10 @@ export const generateMetaDescriptions = async (
 ): Promise<MetaDescriptionGeneratorResponse> => {
   try {
     const provider = params.provider || localStorage.getItem('preferred_provider') as Provider || 'perplexity';
-    const { apiKey, model, endpoint } = getApiConfig(provider);
+    const { apiKey, model, endpoint } = getApiConfig(
+      provider, 
+      params.apiConfig?.model || localStorage.getItem(`preferred_model_descriptionApiModel`) || undefined
+    );
     
     if (!apiKey) {
       return {
@@ -253,7 +271,10 @@ export const generateOutline = async (
 ): Promise<OutlineGeneratorResponse> => {
   try {
     const provider = params.provider || localStorage.getItem('preferred_provider') as Provider || 'perplexity';
-    const { apiKey, model, endpoint } = getApiConfig(provider);
+    const { apiKey, model, endpoint } = getApiConfig(
+      provider, 
+      params.apiConfig?.model || localStorage.getItem(`preferred_model_outlineApiModel`) || undefined
+    );
     
     if (!apiKey) {
       return {
@@ -330,7 +351,10 @@ export const generateContent = async (
 ): Promise<ContentGeneratorResponse> => {
   try {
     const provider = params.provider || localStorage.getItem('preferred_provider') as Provider || 'perplexity';
-    const { apiKey, model, endpoint } = getApiConfig(provider);
+    const { apiKey, model, endpoint } = getApiConfig(
+      provider, 
+      params.apiConfig?.model || localStorage.getItem(`preferred_model_contentApiModel`) || undefined
+    );
     
     if (!apiKey) {
       return {
@@ -521,7 +545,10 @@ export const generateRecipeContent = async (
 ): Promise<RecipeContentGeneratorResponse> => {
   try {
     const provider = params.provider || localStorage.getItem('preferred_provider') as Provider || 'perplexity';
-    const { apiKey, model, endpoint } = getApiConfig(provider);
+    const { apiKey, model, endpoint } = getApiConfig(
+      provider, 
+      params.apiConfig?.model || localStorage.getItem(`preferred_model_recipeApiModel`) || undefined
+    );
     
     if (!apiKey) {
       return {
@@ -623,7 +650,10 @@ export const generateRecipeSchemaMarkup = async (
 ): Promise<RecipeSchemaMarkupResponse> => {
   try {
     const provider = params.provider || localStorage.getItem('preferred_provider') as Provider || 'perplexity';
-    const { apiKey, model, endpoint } = getApiConfig(provider);
+    const { apiKey, model, endpoint } = getApiConfig(
+      provider, 
+      params.apiConfig?.model || localStorage.getItem(`preferred_model_schemaApiModel`) || undefined
+    );
     
     if (!apiKey) {
       return {

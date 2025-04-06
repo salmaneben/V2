@@ -1,9 +1,10 @@
 // src/features/blog-content-generator/components/MetaDescriptionStep.tsx
 
 import React, { useState, useEffect } from 'react';
-import { Copy, CheckCircle, RefreshCw, ArrowLeft, ArrowRight, Info, Settings, AlertCircle, Server, Key } from 'lucide-react';
+import { Copy, CheckCircle, RefreshCw, ArrowLeft, ArrowRight, Info, Settings } from 'lucide-react';
 import { generateMetaDescriptions } from '../utils/blogContentGenerator';
 import { StepProps, Provider } from '../types';
+import ApiSettingsSelector from './ApiSettingsSelector';
 
 export const MetaDescriptionStep: React.FC<StepProps> = ({ 
   data, 
@@ -16,16 +17,14 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [charCount, setCharCount] = useState<{[key: number]: number}>({});
-  const [showApiSettings, setShowApiSettings] = useState(true);
-  const [apiKeyWarning, setApiKeyWarning] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState('');
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   
   // Initialize API settings if they don't exist
   useEffect(() => {
     if (!data.apiSettings?.descriptionApiProvider) {
-      // Default to OpenAI
-      const descriptionApiProvider = 'openai';
-      const descriptionApiModel = 'gpt-4o-mini';
+      // Try to load from localStorage or use defaults
+      const descriptionApiProvider = localStorage.getItem('preferred_provider_descriptionApiProvider') as Provider || data.provider || 'deepseek';
+      const descriptionApiModel = localStorage.getItem('preferred_model_descriptionApiModel') || getDefaultModel(descriptionApiProvider);
       
       updateData({
         apiSettings: {
@@ -35,12 +34,6 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
         }
       });
     }
-    
-    // Load API key from localStorage
-    const provider = data.apiSettings?.descriptionApiProvider || 'openai';
-    const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
-    setApiKey(savedKey);
-    verifyApiKey(provider);
   }, []);
   
   // Calculate character count for each description
@@ -54,82 +47,15 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
     }
   }, [data.generatedDescriptions]);
   
-  const verifyApiKey = (provider: Provider) => {
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    if (!key) {
-      setApiKeyWarning(`No API key found for ${provider}. Please enter your API key below.`);
-    } else {
-      setApiKeyWarning(null);
+  const getDefaultModel = (provider: Provider): string => {
+    switch (provider) {
+      case 'openai': return 'gpt-4';
+      case 'claude': return 'claude-3-sonnet-20240229';
+      case 'perplexity': return 'llama-3.1-sonar-small-128k-online';
+      case 'deepseek': return 'deepseek-chat';
+      case 'custom': return localStorage.getItem('custom_api_model') || '';
+      default: return '';
     }
-  };
-  
-  // Model presets for each provider
-  const modelPresets = {
-    openai: [
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast & affordable' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Balanced' },
-      { id: 'gpt-4o', name: 'GPT-4o', description: 'Most capable' }
-    ],
-    claude: [
-      { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fast & affordable' },
-      { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced' },
-      { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', description: 'Most capable' }
-    ],
-    perplexity: [
-      { id: 'llama-3.1-sonar-small-128k-online', name: 'Llama 3.1 Sonar (Small)', description: 'Fast & affordable' },
-      { id: 'sonar-medium-online', name: 'Sonar Medium', description: 'Balanced' },
-      { id: 'llama-3.1-sonar-large-256k-online', name: 'Llama 3.1 Sonar (Large)', description: 'Most capable' }
-    ],
-    deepseek: [
-      { id: 'deepseek-chat', name: 'DeepSeek Chat', description: 'General-purpose' },
-      { id: 'deepseek-coder', name: 'DeepSeek Coder', description: 'Code-focused' }
-    ]
-  };
-  
-  const handleProviderChange = (provider: Provider) => {
-    // Set default model for the new provider
-    const defaultModel = modelPresets[provider]?.[0]?.id || '';
-    
-    updateData({
-      apiSettings: {
-        ...data.apiSettings,
-        descriptionApiProvider: provider,
-        descriptionApiModel: defaultModel
-      }
-    });
-    
-    // Load API key for the new provider
-    const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
-    setApiKey(savedKey);
-    verifyApiKey(provider);
-  };
-  
-  const handleModelChange = (model: string) => {
-    updateData({
-      apiSettings: {
-        ...data.apiSettings,
-        descriptionApiModel: model
-      }
-    });
-  };
-  
-  const handleSaveApiKey = () => {
-    const provider = data.apiSettings?.descriptionApiProvider || 'openai';
-    
-    // Save to provider-specific key
-    localStorage.setItem(`${provider}_api_key`, apiKey);
-    
-    // Also save as global key for backward compatibility
-    localStorage.setItem('api_key', apiKey);
-    
-    // Clear warning
-    setApiKeyWarning(null);
-    setSuccessMessage('API key saved successfully!');
-    
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      setSuccessMessage(null);
-    }, 3000);
   };
 
   const handleGenerate = async () => {
@@ -143,21 +69,13 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
       return;
     }
 
-    // Check if API key exists
-    const provider = data.apiSettings?.descriptionApiProvider || 'openai';
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    
-    if (!key) {
-      setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
-      console.log(`Generating descriptions with provider: ${provider}`);
+      // Use the step-specific provider if available, otherwise fall back to global provider
+      const provider = data.apiSettings?.descriptionApiProvider || data.provider || 'deepseek';
       
       const result = await generateMetaDescriptions({
         metaTitle: data.selectedTitle,
@@ -182,14 +100,8 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
         }, 3000);
       }
     } catch (err) {
-      console.error('Error details:', err);
-      
-      // Provide more detailed error message if possible
-      if (err instanceof Error) {
-        setError(`Failed to generate descriptions: ${err.message}`);
-      } else {
-        setError('Failed to generate descriptions. Please try again or try a different provider.');
-      }
+      setError('Failed to generate descriptions. Please try again.');
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -220,6 +132,24 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
   const handleDescriptionSelect = (description: string) => {
     updateData({ selectedDescription: description });
   };
+  
+  const handleProviderChange = (providerId: string, provider: Provider) => {
+    updateData({
+      apiSettings: {
+        ...data.apiSettings,
+        [providerId]: provider
+      }
+    });
+  };
+  
+  const handleModelChange = (modelId: string, model: string) => {
+    updateData({
+      apiSettings: {
+        ...data.apiSettings,
+        [modelId]: model
+      }
+    });
+  };
 
   // Get color class based on character count
   const getCharCountColorClass = (count: number) => {
@@ -229,19 +159,6 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
   };
 
   const canProceed = !!data.selectedDescription;
-  const currentProvider = data.apiSettings?.descriptionApiProvider || 'openai';
-  const currentModel = data.apiSettings?.descriptionApiModel || 'gpt-4o-mini';
-
-  // Helper function to get provider display name
-  const getProviderName = (provider: Provider): string => {
-    switch (provider) {
-      case 'openai': return 'OpenAI';
-      case 'claude': return 'Anthropic Claude';
-      case 'perplexity': return 'Perplexity';
-      case 'deepseek': return 'DeepSeek';
-      default: return 'API';
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -257,16 +174,6 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
         </div>
       )}
       
-      {apiKeyWarning && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md flex items-start">
-          <AlertCircle className="h-5 w-5 mr-2 mt-0.5" />
-          <div>
-            <p className="font-medium">API Key Warning</p>
-            <p>{apiKeyWarning}</p>
-          </div>
-        </div>
-      )}
-      
       <div className="p-6 border rounded-md bg-white shadow-sm">
         <h2 className="text-xl font-bold mb-4">Step 2: Generate Meta Descriptions</h2>
         <p className="text-gray-600 mb-6">
@@ -276,89 +183,25 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
         <div className="w-full border rounded-md p-4 mb-4">
           <button 
             className="flex items-center gap-2 w-full text-left"
-            onClick={() => setShowApiSettings(!showApiSettings)}
+            onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
           >
             <Settings className="h-4 w-4" />
             <span>API Settings</span>
-            <span className="ml-auto">{showApiSettings ? '▲' : '▼'}</span>
+            <span className="ml-auto">{showAdvancedSettings ? '▲' : '▼'}</span>
           </button>
           
-          {showApiSettings && (
-            <div className="mt-3 space-y-4">
-              {/* API Provider Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-1">
-                  <Server className="h-4 w-4" />
-                  <span>Select AI Provider</span>
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {(['openai', 'claude', 'perplexity', 'deepseek'] as Provider[]).map((provider) => (
-                    <button
-                      key={provider}
-                      onClick={() => handleProviderChange(provider)}
-                      className={`p-2 border rounded-md text-center transition-colors ${
-                        currentProvider === provider 
-                          ? 'bg-blue-100 border-blue-300 font-medium' 
-                          : 'bg-white hover:bg-gray-50'
-                      }`}
-                    >
-                      {getProviderName(provider)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Model Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Select {getProviderName(currentProvider)} Model
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  {modelPresets[currentProvider]?.map((model) => (
-                    <button
-                      key={model.id}
-                      onClick={() => handleModelChange(model.id)}
-                      className={`p-3 border rounded-md text-left transition-colors ${
-                        currentModel === model.id 
-                          ? 'bg-blue-100 border-blue-300' 
-                          : 'bg-white hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="font-medium">{model.name}</div>
-                      <div className="text-xs text-gray-500">{model.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* API Key Input */}
-              <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-1">
-                  <Key className="h-4 w-4" />
-                  <span>{getProviderName(currentProvider)} API Key</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={`Enter your ${getProviderName(currentProvider)} API key`}
-                    className="flex-grow p-2 border rounded-md"
-                  />
-                  <button
-                    onClick={handleSaveApiKey}
-                    disabled={!apiKey}
-                    className={`px-3 py-2 rounded-md ${
-                      !apiKey ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'
-                    }`}
-                  >
-                    Save Key
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Your API key is stored locally in your browser and is never sent to our servers.
-                </p>
-              </div>
+          {showAdvancedSettings && (
+            <div className="mt-3">
+              <ApiSettingsSelector
+                stepName="Description Generator"
+                providerId="descriptionApiProvider"
+                modelId="descriptionApiModel"
+                provider={data.apiSettings?.descriptionApiProvider || data.provider || 'deepseek'}
+                model={data.apiSettings?.descriptionApiModel || getDefaultModel(data.apiSettings?.descriptionApiProvider || data.provider || 'deepseek')}
+                onProviderChange={handleProviderChange}
+                onModelChange={handleModelChange}
+                showCustomOptions={true}
+              />
             </div>
           )}
         </div>

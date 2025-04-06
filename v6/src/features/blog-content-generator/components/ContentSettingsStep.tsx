@@ -1,8 +1,9 @@
 // src/features/blog-content-generator/components/ContentSettingsStep.tsx
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, RefreshCw, Settings, Server, Key, AlertCircle, Sliders } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, Settings } from 'lucide-react';
 import { StepProps, Provider } from '../types';
+import ApiSettingsSelector from './ApiSettingsSelector';
 
 // Simplified mock API functions (you would replace these with your real API calls)
 const generateSEOKeywords = async (mainKeyword: string, apiSettings: any) => {
@@ -42,32 +43,10 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
   const [isGeneratingInternalLinks, setIsGeneratingInternalLinks] = useState(false);
   const [isGeneratingExternalLinks, setIsGeneratingExternalLinks] = useState(false);
   const [isGeneratingFAQs, setIsGeneratingFAQs] = useState(false);
-  const [showApiSettings, setShowApiSettings] = useState(true);
-  const [apiKeyWarning, setApiKeyWarning] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState('');
+  const [showApiSettings, setShowApiSettings] = useState(false);
   
   // Initialize settings on first render
   useEffect(() => {
-    if (!data.apiSettings?.seoApiProvider) {
-      // Default to OpenAI
-      const seoApiProvider = 'openai';
-      const seoApiModel = 'gpt-4o-mini';
-      
-      updateData({
-        apiSettings: {
-          ...data.apiSettings,
-          seoApiProvider,
-          seoApiModel
-        }
-      });
-    }
-    
-    // Load API key from localStorage
-    const provider = data.apiSettings?.seoApiProvider || 'openai';
-    const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
-    setApiKey(savedKey);
-    verifyApiKey(provider);
-    
     if (!data.imageSettings) {
       updateData({
         imageSettings: {
@@ -92,97 +71,10 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     }
   }, []);
   
-  const verifyApiKey = (provider: Provider) => {
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    if (!key) {
-      setApiKeyWarning(`No API key found for ${provider}. Please enter your API key below.`);
-    } else {
-      setApiKeyWarning(null);
-    }
-  };
-  
-  // Model presets for each provider
-  const modelPresets = {
-    openai: [
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast & affordable' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Balanced' },
-      { id: 'gpt-4o', name: 'GPT-4o', description: 'Most capable' }
-    ],
-    claude: [
-      { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fast & affordable' },
-      { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced' },
-      { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', description: 'Most capable' }
-    ],
-    perplexity: [
-      { id: 'llama-3.1-sonar-small-128k-online', name: 'Llama 3.1 Sonar (Small)', description: 'Fast & affordable' },
-      { id: 'sonar-medium-online', name: 'Sonar Medium', description: 'Balanced' },
-      { id: 'llama-3.1-sonar-large-256k-online', name: 'Llama 3.1 Sonar (Large)', description: 'Most capable' }
-    ],
-    deepseek: [
-      { id: 'deepseek-chat', name: 'DeepSeek Chat', description: 'General-purpose' },
-      { id: 'deepseek-coder', name: 'DeepSeek Coder', description: 'Code-focused' }
-    ]
-  };
-  
-  const handleProviderChange = (provider: Provider) => {
-    // Set default model for the new provider
-    const defaultModel = modelPresets[provider]?.[0]?.id || '';
-    
-    updateData({
-      apiSettings: {
-        ...data.apiSettings,
-        seoApiProvider: provider,
-        seoApiModel: defaultModel
-      }
-    });
-    
-    // Load API key for the new provider
-    const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
-    setApiKey(savedKey);
-    verifyApiKey(provider);
-  };
-  
-  const handleModelChange = (model: string) => {
-    updateData({
-      apiSettings: {
-        ...data.apiSettings,
-        seoApiModel: model
-      }
-    });
-  };
-  
-  const handleSaveApiKey = () => {
-    const provider = data.apiSettings?.seoApiProvider || 'openai';
-    
-    // Save to provider-specific key
-    localStorage.setItem(`${provider}_api_key`, apiKey);
-    
-    // Also save as global key for backward compatibility
-    localStorage.setItem('api_key', apiKey);
-    
-    // Clear warning
-    setApiKeyWarning(null);
-    setSuccessMessage('API key saved successfully!');
-    
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      setSuccessMessage(null);
-    }, 3000);
-  };
-  
   // Generate SEO Keywords
   const handleGenerateSEOKeywords = async () => {
     if (!data.focusKeyword) {
       setError('Please provide a focus keyword first');
-      return;
-    }
-    
-    // Check if API key exists
-    const provider = data.apiSettings?.seoApiProvider || 'openai';
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    
-    if (!key) {
-      setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
       return;
     }
     
@@ -208,15 +100,6 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
       return;
     }
     
-    // Check if API key exists
-    const provider = data.apiSettings?.seoApiProvider || 'openai';
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    
-    if (!key) {
-      setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
-      return;
-    }
-    
     setIsGeneratingLongTail(true);
     setError(null);
     try {
@@ -236,15 +119,6 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
   const handleGenerateInternalLinks = async () => {
     if (!data.focusKeyword) {
       setError('Please provide a focus keyword first');
-      return;
-    }
-    
-    // Check if API key exists
-    const provider = data.apiSettings?.seoApiProvider || 'openai';
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    
-    if (!key) {
-      setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
       return;
     }
     
@@ -270,15 +144,6 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
       return;
     }
     
-    // Check if API key exists
-    const provider = data.apiSettings?.seoApiProvider || 'openai';
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    
-    if (!key) {
-      setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
-      return;
-    }
-    
     setIsGeneratingExternalLinks(true);
     setError(null);
     try {
@@ -298,15 +163,6 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
   const handleGenerateFAQs = async () => {
     if (!data.focusKeyword) {
       setError('Please provide a focus keyword first');
-      return;
-    }
-    
-    // Check if API key exists
-    const provider = data.apiSettings?.seoApiProvider || 'openai';
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    
-    if (!key) {
-      setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
       return;
     }
     
@@ -345,38 +201,30 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     });
   };
   
-  const handleNextStepClick = () => {
-    console.log("Next step button clicked in ContentSettingsStep - calling onNextStep");
-    
-    // Add an explicit check to see if onNextStep exists
-    if (!onNextStep) {
-      console.error("onNextStep function is not defined!");
-      setError("Navigation error: Cannot proceed to next step. Please refresh the page.");
-      return;
-    }
-    
-    try {
-      // Call onNextStep without any validation
-      onNextStep();
-    } catch (error) {
-      console.error("Error in onNextStep:", error);
-      setError("An error occurred when trying to navigate to the next step.");
-    }
-  };
-
-  // Helper function to get provider display name
-  const getProviderName = (provider: Provider): string => {
-    switch (provider) {
-      case 'openai': return 'OpenAI';
-      case 'claude': return 'Anthropic Claude';
-      case 'perplexity': return 'Perplexity';
-      case 'deepseek': return 'DeepSeek';
-      default: return 'API';
-    }
+  // Handle API provider changes
+  const handleProviderChange = (providerId: string, provider: Provider) => {
+    updateData({
+      apiSettings: {
+        ...data.apiSettings,
+        [providerId]: provider
+      }
+    });
   };
   
-  const currentProvider = data.apiSettings?.seoApiProvider || 'openai';
-  const currentModel = data.apiSettings?.seoApiModel || 'gpt-4o-mini';
+  // Handle API model changes
+  const handleModelChange = (modelId: string, model: string) => {
+    updateData({
+      apiSettings: {
+        ...data.apiSettings,
+        [modelId]: model
+      }
+    });
+  };
+  
+  const handleNextStepClick = () => {
+    console.log("Next step button clicked in ContentSettingsStep");
+    onNextStep(); // Call onNextStep without any validation
+  };
   
   return (
     <div className="space-y-6">
@@ -389,16 +237,6 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md">
           {error}
-        </div>
-      )}
-      
-      {apiKeyWarning && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md flex items-start">
-          <AlertCircle className="h-5 w-5 mr-2 mt-0.5" />
-          <div>
-            <p className="font-medium">API Key Warning</p>
-            <p>{apiKeyWarning}</p>
-          </div>
         </div>
       )}
       
@@ -416,81 +254,19 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
           </button>
           
           {showApiSettings && (
-            <div className="mt-3 space-y-4">
-              {/* API Provider Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-1">
-                  <Server className="h-4 w-4" />
-                  <span>Select AI Provider</span>
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {(['openai', 'claude', 'perplexity', 'deepseek'] as Provider[]).map((provider) => (
-                    <button
-                      key={provider}
-                      onClick={() => handleProviderChange(provider)}
-                      className={`p-2 border rounded-md text-center transition-colors ${
-                        currentProvider === provider 
-                          ? 'bg-blue-100 border-blue-300 font-medium' 
-                          : 'bg-white hover:bg-gray-50'
-                      }`}
-                    >
-                      {getProviderName(provider)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Model Selection */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Select {getProviderName(currentProvider)} Model
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  {modelPresets[currentProvider]?.map((model) => (
-                    <button
-                      key={model.id}
-                      onClick={() => handleModelChange(model.id)}
-                      className={`p-3 border rounded-md text-left transition-colors ${
-                        currentModel === model.id 
-                          ? 'bg-blue-100 border-blue-300' 
-                          : 'bg-white hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="font-medium">{model.name}</div>
-                      <div className="text-xs text-gray-500">{model.description}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              {/* API Key Input */}
-              <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-1">
-                  <Key className="h-4 w-4" />
-                  <span>{getProviderName(currentProvider)} API Key</span>
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={`Enter your ${getProviderName(currentProvider)} API key`}
-                    className="flex-grow p-2 border rounded-md"
-                  />
-                  <button
-                    onClick={handleSaveApiKey}
-                    disabled={!apiKey}
-                    className={`px-3 py-2 rounded-md ${
-                      !apiKey ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'
-                    }`}
-                  >
-                    Save Key
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Your API key is stored locally in your browser and is never sent to our servers.
-                </p>
-              </div>
+            <div className="mt-3">
+              <ApiSettingsSelector
+                stepName="SEO Generator"
+                providerId="seoApiProvider"
+                modelId="seoApiModel"
+                provider={data.apiSettings?.seoApiProvider || data.provider || 'deepseek'}
+                model={data.apiSettings?.seoApiModel || (data.apiSettings?.seoApiProvider === 'openai' ? 'gpt-4' : 
+                      data.apiSettings?.seoApiProvider === 'claude' ? 'claude-3-sonnet-20240229' : 
+                      data.apiSettings?.seoApiProvider === 'perplexity' ? 'llama-3.1-sonar-small-128k-online' : 'deepseek-chat')}
+                onProviderChange={handleProviderChange}
+                onModelChange={handleModelChange}
+                showCustomOptions={true}
+              />
             </div>
           )}
         </div>
@@ -1008,8 +784,7 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
         </button>
         
         <button
-          id="next-step-button" // Add a clear ID for debugging
-          onClick={handleNextStepClick}
+          onClick={handleNextStepClick} // Use this dedicated handler
           className="p-3 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center"
         >
           Next Step: Content Generation

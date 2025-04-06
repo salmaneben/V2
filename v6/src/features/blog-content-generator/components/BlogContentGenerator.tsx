@@ -18,7 +18,7 @@ export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ onSa
     // Common fields
     focusKeyword: '',
     relatedTerm: '',
-    provider: localStorage.getItem('preferred_provider') as Provider || 'openai',
+    provider: localStorage.getItem('preferred_provider') as Provider || 'deepseek',
     
     // Initialize API settings with empty object, will be populated in useEffect
     apiSettings: {},
@@ -107,24 +107,24 @@ export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ onSa
     const initializeApiSettings = () => {
       // Initialize API settings from localStorage or with defaults
       const apiSettings = {
-        titleApiProvider: localStorage.getItem('preferred_provider_titleApiProvider') as Provider || formData.provider || 'openai',
-        titleApiModel: localStorage.getItem('preferred_model_titleApiModel') || '',
+        titleApiProvider: localStorage.getItem('preferred_provider_titleApiProvider') as Provider || formData.provider || 'deepseek',
+        titleApiModel: localStorage.getItem('preferred_model_titleApiModel') || getDefaultModel('titleApiProvider'),
         
-        descriptionApiProvider: localStorage.getItem('preferred_provider_descriptionApiProvider') as Provider || formData.provider || 'openai',
-        descriptionApiModel: localStorage.getItem('preferred_model_descriptionApiModel') || '',
+        descriptionApiProvider: localStorage.getItem('preferred_provider_descriptionApiProvider') as Provider || formData.provider || 'deepseek',
+        descriptionApiModel: localStorage.getItem('preferred_model_descriptionApiModel') || getDefaultModel('descriptionApiProvider'),
         
         // No longer need outlineApiProvider since we removed that step
-        seoApiProvider: localStorage.getItem('preferred_provider_seoApiProvider') as Provider || formData.provider || 'openai',
-        seoApiModel: localStorage.getItem('preferred_model_seoApiModel') || '',
+        seoApiProvider: localStorage.getItem('preferred_provider_seoApiProvider') as Provider || formData.provider || 'deepseek',
+        seoApiModel: localStorage.getItem('preferred_model_seoApiModel') || getDefaultModel('seoApiProvider'),
         
-        contentApiProvider: localStorage.getItem('preferred_provider_contentApiProvider') as Provider || formData.provider || 'openai',
-        contentApiModel: localStorage.getItem('preferred_model_contentApiModel') || '',
+        contentApiProvider: localStorage.getItem('preferred_provider_contentApiProvider') as Provider || formData.provider || 'deepseek',
+        contentApiModel: localStorage.getItem('preferred_model_contentApiModel') || getDefaultModel('contentApiProvider'),
         
-        recipeApiProvider: localStorage.getItem('preferred_provider_recipeApiProvider') as Provider || formData.provider || 'openai',
-        recipeApiModel: localStorage.getItem('preferred_model_recipeApiModel') || '',
+        recipeApiProvider: localStorage.getItem('preferred_provider_recipeApiProvider') as Provider || formData.provider || 'deepseek',
+        recipeApiModel: localStorage.getItem('preferred_model_recipeApiModel') || getDefaultModel('recipeApiProvider'),
         
-        schemaApiProvider: localStorage.getItem('preferred_provider_schemaApiProvider') as Provider || formData.provider || 'openai',
-        schemaApiModel: localStorage.getItem('preferred_model_schemaApiModel') || '',
+        schemaApiProvider: localStorage.getItem('preferred_provider_schemaApiProvider') as Provider || formData.provider || 'deepseek',
+        schemaApiModel: localStorage.getItem('preferred_model_schemaApiModel') || getDefaultModel('schemaApiProvider'),
         
         // Custom API settings
         customApiEndpoint: localStorage.getItem('custom_api_endpoint') || '',
@@ -178,6 +178,20 @@ export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ onSa
     initializeApiSettings();
   }, []);
   
+  // Helper function to get default model for a provider
+  const getDefaultModel = (providerId: string): string => {
+    const provider = localStorage.getItem(`preferred_provider_${providerId}`) as Provider || formData.provider || 'deepseek';
+    
+    switch (provider) {
+      case 'openai': return 'gpt-4';
+      case 'claude': return 'claude-3-sonnet-20240229';
+      case 'perplexity': return 'llama-3.1-sonar-small-128k-online';
+      case 'deepseek': return 'deepseek-chat';
+      case 'custom': return localStorage.getItem('custom_api_model') || '';
+      default: return '';
+    }
+  };
+  
   // Save preferred provider to localStorage
   useEffect(() => {
     if (formData.provider) {
@@ -210,26 +224,33 @@ export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ onSa
     });
   };
 
-  // Navigate to next step - FIXED SIMPLIFIED VERSION
+  // Navigate to next step
   const handleNextStep = () => {
-    try {
-      // Mark current step as completed
-      if (!completedSteps.includes(currentStep)) {
-        setCompletedSteps(prev => [...prev, currentStep]);
-      }
-      
-      // Move to next step
-      setCurrentStep(prev => prev + 1);
-      
-      // If all steps completed, call onSave callback
-      const totalSteps = formData.isRecipe ? 4 : 3;
-      if (currentStep + 1 >= totalSteps && onSave) {
+    console.log("handleNextStep called, current step:", currentStep);
+    
+    // Mark current step as completed
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps(prev => [...prev, currentStep]);
+    }
+    
+    // Calculate next step
+    const totalSteps = formData.isRecipe ? 4 : 3; // Reduced by 1 since we removed Outline
+    const nextStep = currentStep + 1;
+    
+    console.log("Moving to step:", nextStep);
+    
+    // Check if we're at the end
+    if (nextStep >= totalSteps) {
+      console.log("Reached the end of steps");
+      // We're done, maybe call onSave callback
+      if (onSave) {
         onSave(formData);
       }
-    } catch (error) {
-      console.error("Error in handleNextStep:", error);
-      setError("Navigation error. Please try again.");
+      return;
     }
+    
+    // Set the next step
+    setCurrentStep(nextStep);
   };
 
   // Navigate to previous step
@@ -251,6 +272,7 @@ export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ onSa
 
   // Render the current step
   const renderCurrentStep = () => {
+    console.log("Rendering step:", currentStep);
     switch (currentStep) {
       case 0:
         return (
