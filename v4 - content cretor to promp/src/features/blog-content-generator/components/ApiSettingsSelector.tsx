@@ -84,12 +84,26 @@ const ApiSettingsSelector: React.FC<ApiSettingsSelectorProps> = ({
         ];
       case 'custom':
         return [
-          { value: customApiModel, label: customApiModel || 'Custom Model' }
+          { value: customApiModel || 'custom-model', label: customApiModel || 'Custom Model' }
         ];
       default:
         return [
           { value: 'default', label: 'Default Model' }
         ];
+    }
+  };
+
+  // Helper function to save API settings
+  const saveApiSettings = (providerId: string, provider: Provider, modelId?: string, model?: string) => {
+    // Save provider preference
+    localStorage.setItem(`preferred_provider_${providerId}`, provider);
+    
+    // Also set as global preference
+    localStorage.setItem('preferred_provider', provider);
+    
+    // Save model preference if provided
+    if (modelId && model) {
+      localStorage.setItem(`preferred_model_${modelId}`, model);
     }
   };
 
@@ -101,10 +115,18 @@ const ApiSettingsSelector: React.FC<ApiSettingsSelectorProps> = ({
     const modelOptions = getModelOptions(newProvider);
     if (modelOptions.length > 0) {
       onModelChange(modelId, modelOptions[0].value);
+      
+      // Save the model preference
+      localStorage.setItem(`preferred_model_${modelId}`, modelOptions[0].value);
     }
     
     // Save the provider preference
-    localStorage.setItem(`preferred_provider_${providerId}`, newProvider);
+    saveApiSettings(providerId, newProvider);
+    
+    // If changing to custom, show custom settings
+    if (newProvider === 'custom') {
+      setShowCustomSettings(true);
+    }
   };
 
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -113,6 +135,9 @@ const ApiSettingsSelector: React.FC<ApiSettingsSelectorProps> = ({
     
     // Save the model preference
     localStorage.setItem(`preferred_model_${modelId}`, value);
+    
+    // Also save specific model for provider
+    localStorage.setItem(`${provider}_model`, value);
   };
 
   const handleSaveCustomSettings = () => {
@@ -125,6 +150,7 @@ const ApiSettingsSelector: React.FC<ApiSettingsSelectorProps> = ({
     // Update the model selector with the new custom model
     if (provider === 'custom') {
       onModelChange(modelId, customApiModel);
+      localStorage.setItem(`preferred_model_${modelId}`, customApiModel);
     }
     
     setShowCustomSettings(false);

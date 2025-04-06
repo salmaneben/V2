@@ -55,11 +55,38 @@ export interface OutlineGeneratorResponse extends APIResponse {
 // Step 4: Content Generation Based on Outline
 export interface ContentGeneratorRequest {
   focusKeyword: string;
-  outline: string;
+  outline?: string; // Keep for backward compatibility
   contentLength?: number;
   targetAudience?: string;
   provider?: Provider;
   apiConfig?: ApiConfig;
+  
+  // Additional content settings
+  wordCount?: string; // 'small', 'medium', 'large'
+  tone?: string;
+  textReadability?: string;
+  includeConclusion?: boolean;
+  includeTables?: boolean;
+  includeH3?: boolean;
+  includeLists?: boolean;
+  includeItalics?: boolean;
+  includeQuotes?: boolean;
+  includeBold?: boolean;
+  includeKeyTakeaways?: boolean;
+  includeFAQs?: boolean;
+  
+  // SEO settings
+  seoKeywords?: string;
+  longTailKeywords?: string;
+  internalLinkingWebsite?: string;
+  externalLinkType?: string;
+  faqs?: string;
+  
+  // Additional instructions
+  additionalInstructions?: string;
+  
+  // Output format
+  outputFormat?: 'standard' | 'blogPost';
 }
 
 export interface ContentGeneratorResponse extends APIResponse {

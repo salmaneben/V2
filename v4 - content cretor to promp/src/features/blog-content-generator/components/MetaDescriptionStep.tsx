@@ -309,7 +309,7 @@ export const MetaDescriptionStep: React.FC<StepProps> = ({
           disabled={!canProceed}
           className={`p-3 rounded-md ${!canProceed ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'} text-white flex items-center`}
         >
-          Next Step: Outline
+          Next Step: Content Settings
           <ArrowRight className="ml-2 h-4 w-4" />
         </button>
       </div>

@@ -180,7 +180,7 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
             <p className="text-xs text-gray-500 mt-1">Adding a related term will improve title relevance.</p>
           </div>
           
-          <div className="w-full border rounded-md p-4">
+          <div className="w-full border rounded-md p-4 hidden">
             <button 
               className="flex items-center gap-2 w-full text-left"
               onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}

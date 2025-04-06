@@ -4,11 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { StepIndicator } from './StepIndicator';
 import { MetaTitleStep } from './MetaTitleStep';
 import { MetaDescriptionStep } from './MetaDescriptionStep';
-import { ContentSettingsStep } from './ContentSettingsStep'; // Import ContentSettingsStep, not OutlineStep
+import { ContentSettingsStep } from './ContentSettingsStep';
 import { ContentStep } from './ContentStep';
 import { SchemaMarkupStep } from './SchemaMarkupStep';
 import { BlogContentGeneratorProps, BlogContentFormData, Provider, ImageSettings, OptInSettings } from '../types';
 import { Alert } from '@/components/ui/alert';
+import ApiSettingsButton from './ApiSettingsButton';
 
 export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ onSave }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -327,6 +328,11 @@ export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ onSa
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Blog Content Generator</h2>
+        <ApiSettingsButton />
+      </div>
+      
       {error && (
         <Alert variant="destructive" className="mb-4">
           {error}

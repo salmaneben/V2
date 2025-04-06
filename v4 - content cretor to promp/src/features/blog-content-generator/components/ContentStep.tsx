@@ -99,12 +99,40 @@ export const ContentStep: React.FC<StepProps> = ({
         // Use the content-specific provider
         const provider = data.apiSettings?.contentApiProvider || data.provider || 'deepseek';
         
+        // Prepare all content settings to pass to the generateContent function
         result = await generateContent({
           focusKeyword: data.focusKeyword,
-          outline: data.outline || '', // Make outline optional
+          outline: data.outline || '', // Keep outline optional for backward compatibility
           contentLength: data.contentLength,
           targetAudience: data.targetAudience,
-          provider
+          provider,
+          
+          // Add all the content settings
+          wordCount: data.wordCount,
+          tone: data.tone,
+          textReadability: data.textReadability,
+          includeConclusion: data.includeConclusion,
+          includeTables: data.includeTables,
+          includeH3: data.includeH3,
+          includeLists: data.includeLists,
+          includeItalics: data.includeItalics,
+          includeQuotes: data.includeQuotes,
+          includeBold: data.includeBold,
+          includeKeyTakeaways: data.includeKeyTakeaways,
+          includeFAQs: data.includeFAQs,
+          
+          // Add SEO settings
+          seoKeywords: data.seoKeywords,
+          longTailKeywords: data.longTailKeywords,
+          internalLinkingWebsite: data.internalLinkingWebsite,
+          externalLinkType: data.externalLinkType,
+          faqs: data.faqs,
+          
+          // Add output format
+          outputFormat: data.outputFormat,
+          
+          // Add additional instructions
+          additionalInstructions: data.additionalInstructions
         });
         
         if (result.error) {
