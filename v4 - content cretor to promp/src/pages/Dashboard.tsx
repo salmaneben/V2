@@ -1,7 +1,7 @@
 // src/pages/Dashboard.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileCode, Zap, Clock, FileText, Bookmark, RefreshCw, ChevronRight, Type, ExternalLink, BarChart, PenTool, Edit3 } from 'lucide-react';
+import { FileCode, Zap, Clock, FileText, Bookmark, RefreshCw, ChevronRight, Type, ExternalLink, BarChart, PenTool, Edit3, Search, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { getAppStats, incrementStat, getRecentDocuments, initializeStats, updateStat } from '@/lib/appStats';
@@ -20,7 +20,13 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarState }) => {
     headlineAnalyzer: 0,
     metaTitleGenerator: 0,
     metaDescriptionGenerator: 0,
-    blogContentGenerator: 0 // Added Blog Content Generator stat
+    blogContentGenerator: 0,
+    seoKeywordsGenerated: 0,
+    longTailKeywordsGenerated: 0,
+    faqsGenerated: 0,
+    internalLinksGenerated: 0,
+    externalLinksGenerated: 0,
+    targetAudienceGenerated: 0
   });
   const [recentDocs, setRecentDocs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +48,26 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarState }) => {
     }
     if (currentStats.apiCalls !== 173) {
       updateStat('apiCalls', 173);
+    }
+    
+    // Initialize new statistics if they don't exist yet
+    if (currentStats.seoKeywordsGenerated === undefined) {
+      updateStat('seoKeywordsGenerated', 0);
+    }
+    if (currentStats.longTailKeywordsGenerated === undefined) {
+      updateStat('longTailKeywordsGenerated', 0);
+    }
+    if (currentStats.faqsGenerated === undefined) {
+      updateStat('faqsGenerated', 0);
+    }
+    if (currentStats.internalLinksGenerated === undefined) {
+      updateStat('internalLinksGenerated', 0);
+    }
+    if (currentStats.externalLinksGenerated === undefined) {
+      updateStat('externalLinksGenerated', 0);
+    }
+    if (currentStats.targetAudienceGenerated === undefined) {
+      updateStat('targetAudienceGenerated', 0);
     }
     
     // Update stats state
@@ -108,6 +134,15 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarState }) => {
     addToast('Opening document', 'info');
   };
 
+  // Calculate total API-generated items
+  const totalGeneratedItems = 
+    (stats.seoKeywordsGenerated || 0) + 
+    (stats.longTailKeywordsGenerated || 0) + 
+    (stats.faqsGenerated || 0) + 
+    (stats.internalLinksGenerated || 0) + 
+    (stats.externalLinksGenerated || 0) + 
+    (stats.targetAudienceGenerated || 0);
+
   return (
     <div className={`
       p-4 sm:p-6 transition-all duration-300
@@ -132,7 +167,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarState }) => {
       </div>
       
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-8 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card className="p-4 flex flex-col items-center justify-center text-center">
           <div className="bg-indigo-100 p-2 rounded-full mb-2">
             <FileText className="h-5 w-5 text-indigo-600" />
@@ -188,6 +223,25 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarState }) => {
           </div>
           <div className="text-sm text-gray-500">Active Projects</div>
         </Card>
+      </div>
+      
+      {/* Tool Usage Stats */}
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Tool Usage Statistics</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Blog Content Generator Stat */}
+        <Card className="p-4 flex flex-col items-center justify-center text-center">
+          <div className="bg-purple-100 p-2 rounded-full mb-2">
+            <Edit3 className="h-5 w-5 text-purple-600" />
+          </div>
+          <div className="text-2xl font-bold">
+            {isLoading || isRefreshing ? (
+              <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mx-auto"></div>
+            ) : (
+              stats.blogContentGenerator || 0
+            )}
+          </div>
+          <div className="text-sm text-gray-500">Blog Posts Created</div>
+        </Card>
         
         {/* Headline Analyzer Stat */}
         <Card className="p-4 flex flex-col items-center justify-center text-center">
@@ -233,20 +287,99 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarState }) => {
           </div>
           <div className="text-sm text-gray-500">Descriptions Generated</div>
         </Card>
-        
-        {/* Blog Content Generator Stat */}
+      </div>
+      
+      {/* Blog Content Tool Usage */}
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Blog Content Components</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        {/* SEO Keywords Generated */}
         <Card className="p-4 flex flex-col items-center justify-center text-center">
-          <div className="bg-purple-100 p-2 rounded-full mb-2">
-            <Edit3 className="h-5 w-5 text-purple-600" />
+          <div className="bg-teal-100 p-2 rounded-full mb-2">
+            <Search className="h-5 w-5 text-teal-600" />
           </div>
           <div className="text-2xl font-bold">
             {isLoading || isRefreshing ? (
               <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mx-auto"></div>
             ) : (
-              stats.blogContentGenerator || 0
+              stats.seoKeywordsGenerated || 0
             )}
           </div>
-          <div className="text-sm text-gray-500">Blog Posts Created</div>
+          <div className="text-sm text-gray-500">SEO Keywords</div>
+        </Card>
+        
+        {/* Long Tail Keywords Generated */}
+        <Card className="p-4 flex flex-col items-center justify-center text-center">
+          <div className="bg-blue-100 p-2 rounded-full mb-2">
+            <Key className="h-5 w-5 text-blue-600" />
+          </div>
+          <div className="text-2xl font-bold">
+            {isLoading || isRefreshing ? (
+              <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mx-auto"></div>
+            ) : (
+              stats.longTailKeywordsGenerated || 0
+            )}
+          </div>
+          <div className="text-sm text-gray-500">Long Tail Keywords</div>
+        </Card>
+        
+        {/* FAQs Generated */}
+        <Card className="p-4 flex flex-col items-center justify-center text-center">
+          <div className="bg-indigo-100 p-2 rounded-full mb-2">
+            <FileText className="h-5 w-5 text-indigo-600" />
+          </div>
+          <div className="text-2xl font-bold">
+            {isLoading || isRefreshing ? (
+              <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mx-auto"></div>
+            ) : (
+              stats.faqsGenerated || 0
+            )}
+          </div>
+          <div className="text-sm text-gray-500">FAQs</div>
+        </Card>
+        
+        {/* Internal Links Generated */}
+        <Card className="p-4 flex flex-col items-center justify-center text-center">
+          <div className="bg-emerald-100 p-2 rounded-full mb-2">
+            <ExternalLink className="h-5 w-5 text-emerald-600" />
+          </div>
+          <div className="text-2xl font-bold">
+            {isLoading || isRefreshing ? (
+              <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mx-auto"></div>
+            ) : (
+              stats.internalLinksGenerated || 0
+            )}
+          </div>
+          <div className="text-sm text-gray-500">Internal Links</div>
+        </Card>
+        
+        {/* External Links Generated */}
+        <Card className="p-4 flex flex-col items-center justify-center text-center">
+          <div className="bg-purple-100 p-2 rounded-full mb-2">
+            <ExternalLink className="h-5 w-5 text-purple-600" />
+          </div>
+          <div className="text-2xl font-bold">
+            {isLoading || isRefreshing ? (
+              <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mx-auto"></div>
+            ) : (
+              stats.externalLinksGenerated || 0
+            )}
+          </div>
+          <div className="text-sm text-gray-500">External Links</div>
+        </Card>
+        
+        {/* Target Audience Generated */}
+        <Card className="p-4 flex flex-col items-center justify-center text-center">
+          <div className="bg-amber-100 p-2 rounded-full mb-2">
+            <PenTool className="h-5 w-5 text-amber-600" />
+          </div>
+          <div className="text-2xl font-bold">
+            {isLoading || isRefreshing ? (
+              <div className="h-7 w-12 bg-gray-200 rounded animate-pulse mx-auto"></div>
+            ) : (
+              stats.targetAudienceGenerated || 0
+            )}
+          </div>
+          <div className="text-sm text-gray-500">Target Audiences</div>
         </Card>
       </div>
       

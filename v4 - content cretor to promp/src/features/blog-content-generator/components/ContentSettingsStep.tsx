@@ -1,29 +1,25 @@
 // src/features/blog-content-generator/components/ContentSettingsStep.tsx
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, RefreshCw, Settings, Server, Key, AlertCircle, Sliders } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, Settings, Server, Key, AlertCircle, 
+  ChevronDown, ChevronUp, HelpCircle, Sliders, Image, Mail, Search, Sparkles } from 'lucide-react';
 import { StepProps, Provider } from '../types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
+import { 
+  generateBlogContent
+} from '@/api/services/content';
+import { useContentGeneration } from '@/api/hooks/useContentGeneration';
 
-// Simplified mock API functions (you would replace these with your real API calls)
-const generateSEOKeywords = async (mainKeyword: string, apiSettings: any) => {
-  // In a real implementation, this would call your API
-  return "- Top ranking keyword for this topic\n- Related keyword variation\n- High search volume term\n- Long-tail keyword opportunity\n- Competitor targeted keyword";
-};
-
-const generateLongTailKeywords = async (mainKeyword: string, apiSettings: any) => {
-  return "- How to " + mainKeyword + " effectively\n- Best " + mainKeyword + " strategies for beginners\n- " + mainKeyword + " tips and tricks";
-};
-
-const generateInternalLinks = async (mainKeyword: string, apiSettings: any) => {
-  return "1. https://yourdomain.com/related-page-1 - Suggested anchor text: Complete Guide\n2. https://yourdomain.com/related-page-2 - Suggested anchor text: Advanced Tips\n3. https://yourdomain.com/related-page-3 - Suggested anchor text: Case Study";
-};
-
-const generateExternalLinks = async (mainKeyword: string, apiSettings: any) => {
-  return "1. https://authority-site.com/relevant-article\n2. https://trusted-resource.org/research-study\n3. https://industry-leader.com/expert-opinion";
-};
-
-const generateFAQs = async (mainKeyword: string, apiSettings: any) => {
-  return "1. Q: What is " + mainKeyword + "?\nA: Brief definition of " + mainKeyword + ".\n\n2. Q: How does " + mainKeyword + " work?\nA: Simple explanation of the process.\n\n3. Q: What are the benefits of " + mainKeyword + "?\nA: List of main advantages.\n\n4. Q: How to get started with " + mainKeyword + "?\nA: Basic steps to begin.\n\n5. Q: What are common mistakes with " + mainKeyword + "?\nA: Typical errors to avoid.";
+// Hook descriptions object
+const hookDescriptions = {
+  "Question": "Craft an intriguing question that immediately draws the reader's attention. The question should be relevant to the article's topic and evoke curiosity or challenge common beliefs. Aim to make the reader reflect or feel compelled to find the answer within the article.",
+  "Statistical or Fact": "Begin with a surprising statistic or an unexpected fact that relates directly to the article's main topic. This hook should provide a sense of scale or impact that makes the reader eager to learn more about the subject.",
+  "Quotation": "Use a powerful or thought-provoking quote from a well-known figure that ties into the theme of the article. The quote should set the tone for the article and provoke interest in the topic.",
+  "Anecdotal or Story": "Create a brief, engaging story or anecdote that is relevant to the article's main subject. This story should be relatable and set the stage for the main content.",
+  "Personal or Emotional": "Start with a personal experience or an emotional appeal that connects with the reader on a deeper level. This approach should establish empathy and make the topic feel more relevant to the reader's life."
 };
 
 export const ContentSettingsStep: React.FC<StepProps> = ({ 
@@ -32,7 +28,6 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
   onNextStep,
   onPrevStep 
 }) => {
-  const [activeTab, setActiveTab] = useState('content');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
@@ -42,9 +37,29 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
   const [isGeneratingInternalLinks, setIsGeneratingInternalLinks] = useState(false);
   const [isGeneratingExternalLinks, setIsGeneratingExternalLinks] = useState(false);
   const [isGeneratingFAQs, setIsGeneratingFAQs] = useState(false);
-  const [showApiSettings, setShowApiSettings] = useState(true);
+  const [isGeneratingTargetAudience, setIsGeneratingTargetAudience] = useState(false);
   const [apiKeyWarning, setApiKeyWarning] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [websiteUrls, setWebsiteUrls] = useState('');
+  
+  // Content generation hook
+  const { generateContent } = useContentGeneration();
+  
+  // State for expanded sections (replacing tabs with collapsible sections)
+  const [expandedSections, setExpandedSections] = useState({
+    apiSettings: true,
+    basicInfo: true,
+    coreSettings: true,
+    textSettings: true,
+    documentElements: true,
+    structure: true,
+    internalLinking: false,
+    externalLinking: false,
+    imageSettings: false,
+    optInSettings: false,
+    seoSettings: false
+  });
   
   // Initialize settings on first render
   useEffect(() => {
@@ -170,6 +185,56 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     }, 3000);
   };
   
+  // Generate Target Audience
+  const handleGenerateTargetAudience = async () => {
+    if (!data.focusKeyword) {
+      setError('Please provide a focus keyword first');
+      return;
+    }
+    
+    // Check if API key exists
+    const provider = data.apiSettings?.seoApiProvider || 'openai';
+    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
+    
+    if (!key) {
+      setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
+      return;
+    }
+    
+    setIsGeneratingTargetAudience(true);
+    setError(null);
+    try {
+      const prompt = `Generate a comprehensive target audience description for content about "${data.focusKeyword}". 
+      Format the output as a bulleted list of 3-5 different audience segments. For each segment, include demographics, 
+      interests, and what they would be looking for in content about this topic.`;
+      
+      const systemPrompt = "You are an expert in audience research and content marketing. Create a concise but detailed target audience profile in a bulleted list format.";
+      
+      const result = await generateContent(prompt, {
+        provider: provider,
+        apiConfig: {
+          provider: provider,
+          apiKey: key,
+          model: data.apiSettings?.seoApiModel
+        },
+        systemPrompt: systemPrompt
+      });
+      
+      if (result) {
+        updateData({ targetAudience: result });
+        setSuccessMessage('Target audience generated successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error('Failed to generate target audience');
+      }
+    } catch (err) {
+      setError('Failed to generate target audience. Please try again.');
+      console.error(err);
+    } finally {
+      setIsGeneratingTargetAudience(false);
+    }
+  };
+  
   // Generate SEO Keywords
   const handleGenerateSEOKeywords = async () => {
     if (!data.focusKeyword) {
@@ -189,10 +254,28 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     setIsGeneratingSEOKeywords(true);
     setError(null);
     try {
-      const keywords = await generateSEOKeywords(data.focusKeyword, data.apiSettings);
-      updateData({ seoKeywords: keywords });
-      setSuccessMessage('SEO Keywords generated successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      const prompt = `Generate a list of 5-7 high-value SEO keywords related to "${data.focusKeyword}". 
+      Include a mix of short-tail and mid-tail keywords with good search volume. Format as a bullet list.`;
+      
+      const systemPrompt = "You are an SEO expert. Generate a list of valuable, relevant keywords for content creation. Focus on keywords with good search volume and reasonable competition.";
+      
+      const result = await generateContent(prompt, {
+        provider: provider,
+        apiConfig: {
+          provider: provider,
+          apiKey: key,
+          model: data.apiSettings?.seoApiModel
+        },
+        systemPrompt: systemPrompt
+      });
+      
+      if (result) {
+        updateData({ seoKeywords: result });
+        setSuccessMessage('SEO Keywords generated successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error('Failed to generate SEO keywords');
+      }
     } catch (err) {
       setError('Failed to generate SEO keywords. Please try again.');
       console.error(err);
@@ -220,10 +303,28 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     setIsGeneratingLongTail(true);
     setError(null);
     try {
-      const longTail = await generateLongTailKeywords(data.focusKeyword, data.apiSettings);
-      updateData({ longTailKeywords: longTail });
-      setSuccessMessage('Long Tail Keywords generated successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      const prompt = `Generate a list of 5-7 long-tail keyword phrases (3-5 words each) for the main keyword "${data.focusKeyword}". 
+      Focus on question-based and problem-solving phrases that people might search for. Format as a bullet list.`;
+      
+      const systemPrompt = "You are an SEO expert specializing in long-tail keyword research. Generate valuable long-tail keywords that have lower competition but clear search intent.";
+      
+      const result = await generateContent(prompt, {
+        provider: provider,
+        apiConfig: {
+          provider: provider,
+          apiKey: key,
+          model: data.apiSettings?.seoApiModel
+        },
+        systemPrompt: systemPrompt
+      });
+      
+      if (result) {
+        updateData({ longTailKeywords: result });
+        setSuccessMessage('Long Tail Keywords generated successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error('Failed to generate long tail keywords');
+      }
     } catch (err) {
       setError('Failed to generate long tail keywords. Please try again.');
       console.error(err);
@@ -239,6 +340,16 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
       return;
     }
     
+    if (!websiteUrl) {
+      setError('Please enter your website URL first');
+      return;
+    }
+    
+    if (!websiteUrls) {
+      setError('Please enter website URLs or sitemap content first');
+      return;
+    }
+    
     // Check if API key exists
     const provider = data.apiSettings?.seoApiProvider || 'openai';
     const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
@@ -251,10 +362,38 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     setIsGeneratingInternalLinks(true);
     setError(null);
     try {
-      const internalLinks = await generateInternalLinks(data.focusKeyword, data.apiSettings);
-      updateData({ internalLinkingWebsite: internalLinks });
-      setSuccessMessage('Internal Links generated successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      const prompt = `Based on the following website URLs, recommend 3-5 internal linking opportunities for content about "${data.focusKeyword}".
+      
+      Website URL: ${websiteUrl}
+      Available URLs:
+      ${websiteUrls}
+      
+      For each recommendation, include:
+      1. Full URL
+      2. Suggested anchor text
+      3. Brief reason why this is a good linking opportunity
+      
+      Format as a numbered list.`;
+      
+      const systemPrompt = "You are an SEO internal linking expert. Analyze the provided URLs and suggest the best internal linking opportunities that would create a strong topic cluster and improve SEO.";
+      
+      const result = await generateContent(prompt, {
+        provider: provider,
+        apiConfig: {
+          provider: provider,
+          apiKey: key,
+          model: data.apiSettings?.seoApiModel
+        },
+        systemPrompt: systemPrompt
+      });
+      
+      if (result) {
+        updateData({ internalLinkingWebsite: result });
+        setSuccessMessage('Internal Links generated successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error('Failed to generate internal links');
+      }
     } catch (err) {
       setError('Failed to generate internal links. Please try again.');
       console.error(err);
@@ -282,10 +421,33 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     setIsGeneratingExternalLinks(true);
     setError(null);
     try {
-      const externalLinks = await generateExternalLinks(data.focusKeyword, data.apiSettings);
-      updateData({ externalLinkType: externalLinks });
-      setSuccessMessage('External Links generated successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      const prompt = `Suggest 3-5 types of authoritative external sources that would be valuable to link to in content about "${data.focusKeyword}". 
+      For each suggestion, provide:
+      1. The type of source (e.g., research institution, industry association)
+      2. Examples of specific websites in this category
+      3. What kind of information from these sources would be valuable to cite
+      
+      Format as a numbered list.`;
+      
+      const systemPrompt = "You are an expert in content research and external linking strategy. Recommend high-quality external linking opportunities that would add credibility and value to content.";
+      
+      const result = await generateContent(prompt, {
+        provider: provider,
+        apiConfig: {
+          provider: provider,
+          apiKey: key,
+          model: data.apiSettings?.seoApiModel
+        },
+        systemPrompt: systemPrompt
+      });
+      
+      if (result) {
+        updateData({ externalLinkType: result });
+        setSuccessMessage('External Links generated successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error('Failed to generate external links');
+      }
     } catch (err) {
       setError('Failed to generate external links. Please try again.');
       console.error(err);
@@ -313,10 +475,29 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     setIsGeneratingFAQs(true);
     setError(null);
     try {
-      const faqs = await generateFAQs(data.focusKeyword, data.apiSettings);
-      updateData({ faqs: faqs });
-      setSuccessMessage('FAQs generated successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      const prompt = `Generate 5 frequently asked questions (FAQs) with detailed answers about "${data.focusKeyword}". 
+      Include a mix of basic and advanced questions that would provide value to readers.
+      Format each as "Q: [Question]" followed by "A: [Answer]" with a blank line between each FAQ.`;
+      
+      const systemPrompt = "You are an expert in creating FAQ sections for content. Generate comprehensive, accurate, and helpful FAQs that address common questions and search intents related to the topic.";
+      
+      const result = await generateContent(prompt, {
+        provider: provider,
+        apiConfig: {
+          provider: provider,
+          apiKey: key,
+          model: data.apiSettings?.seoApiModel
+        },
+        systemPrompt: systemPrompt
+      });
+      
+      if (result) {
+        updateData({ faqs: result });
+        setSuccessMessage('FAQs generated successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        throw new Error('Failed to generate FAQs');
+      }
     } catch (err) {
       setError('Failed to generate FAQs. Please try again.');
       console.error(err);
@@ -343,6 +524,30 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
         ...newSettings
       }
     });
+  };
+  
+  // Toggle section expansion
+  const toggleSection = (section: string) => {
+    setExpandedSections({
+      ...expandedSections,
+      [section]: !expandedSections[section]
+    });
+  };
+  
+  // Handle hook type change
+  const handleHookTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedHookType = e.target.value;
+    
+    // Update the hook type
+    updateData({ introductoryHook: selectedHookType });
+    
+    // If a hook type was selected, also update the custom hook text with the appropriate description
+    if (selectedHookType && hookDescriptions[selectedHookType]) {
+      updateData({ customHook: hookDescriptions[selectedHookType] });
+    } else {
+      // If "None" was selected, clear the custom hook text
+      updateData({ customHook: '' });
+    }
   };
   
   const handleNextStepClick = () => {
@@ -404,18 +609,20 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
       
       <div className="p-6 border rounded-md bg-white shadow-sm">
         <h2 className="text-xl font-bold mb-4">Step 3: Content Settings</h2>
+        <p className="text-gray-600 mb-4">Configure how your content will be generated and structured.</p>
         
+        {/* API Settings Section */}
         <div className="w-full border rounded-md p-4 mb-4">
           <button 
             className="flex items-center gap-2 w-full text-left"
-            onClick={() => setShowApiSettings(!showApiSettings)}
+            onClick={() => toggleSection('apiSettings')}
           >
             <Settings className="h-4 w-4" />
-            <span>API Settings</span>
-            <span className="ml-auto">{showApiSettings ? '▲' : '▼'}</span>
+            <span className="font-medium">API Settings</span>
+            <span className="ml-auto">{expandedSections.apiSettings ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
           </button>
           
-          {showApiSettings && (
+          {expandedSections.apiSettings && (
             <div className="mt-3 space-y-4">
               {/* API Provider Selection */}
               <div>
@@ -495,100 +702,504 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
           )}
         </div>
         
-        <div className="mb-4 border-b">
-          <div className="flex flex-wrap space-x-2">
-            <button 
-              className={`py-2 px-4 ${activeTab === 'content' ? 'bg-blue-100 border-b-2 border-blue-500' : ''}`}
-              onClick={() => setActiveTab('content')}
-            >
-              Content Settings
-            </button>
-            <button 
-              className={`py-2 px-4 ${activeTab === 'images' ? 'bg-blue-100 border-b-2 border-blue-500' : ''}`}
-              onClick={() => setActiveTab('images')}
-            >
-              Image Prompts
-            </button>
-            <button 
-              className={`py-2 px-4 ${activeTab === 'optin' ? 'bg-blue-100 border-b-2 border-blue-500' : ''}`}
-              onClick={() => setActiveTab('optin')}
-            >
-              Opt-In Form
-            </button>
-            <button 
-              className={`py-2 px-4 ${activeTab === 'seo' ? 'bg-blue-100 border-b-2 border-blue-500' : ''}`}
-              onClick={() => setActiveTab('seo')}
-            >
-              SEO Options
-            </button>
-          </div>
+        {/* Basic Info Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('basicInfo')}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="font-medium">Basic Info</span>
+            <span className="ml-auto">{expandedSections.basicInfo ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.basicInfo && (
+            <div className="mt-3 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Language</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={data.language || 'English (US)'}
+                    onChange={(e) => updateData({ language: e.target.value })}
+                  >
+                    <option value="English (US)">🇺🇸 English (US)</option>
+                    <option value="English (UK)">🇬🇧 English (UK)</option>
+                    <option value="English (Australia)">🇦🇺 English (Australia)</option>
+                    <option value="English (Canada)">🇨🇦 English (Canada)</option>
+                    <option value="Afrikaans">Afrikaans</option>
+                    <option value="Albanian">Albanian</option>
+                    <option value="Arabic">Arabic</option>
+                    <option value="Armenian">Armenian</option>
+                    <option value="Azerbaijani">Azerbaijani</option>
+                    <option value="Bengali">Bengali</option>
+                    <option value="Bulgarian">Bulgarian</option>
+                    <option value="Chinese (Simplified)">Chinese (Simplified)</option>
+                    <option value="Chinese (Traditional)">Chinese (Traditional)</option>
+                    <option value="Croatian">Croatian</option>
+                    <option value="Czech">Czech</option>
+                    <option value="Danish">Danish</option>
+                    <option value="Dutch">Dutch</option>
+                    <option value="Estonian">Estonian</option>
+                    <option value="Filipino">Filipino</option>
+                    <option value="Finnish">Finnish</option>
+                    <option value="French">French</option>
+                    <option value="Georgian">Georgian</option>
+                    <option value="German">German</option>
+                    <option value="Greek">Greek</option>
+                    <option value="Hebrew">Hebrew</option>
+                    <option value="Hindi">Hindi</option>
+                    <option value="Hungarian">Hungarian</option>
+                    <option value="Indonesian">Indonesian</option>
+                    <option value="Italian">Italian</option>
+                    <option value="Japanese">Japanese</option>
+                    <option value="Kazakh">Kazakh</option>
+                    <option value="Korean">Korean</option>
+                    <option value="Kyrgyz">Kyrgyz</option>
+                    <option value="Latvian">Latvian</option>
+                    <option value="Lithuanian">Lithuanian</option>
+                    <option value="Macedonian">Macedonian</option>
+                    <option value="Malay">Malay</option>
+                    <option value="Norwegian">Norwegian</option>
+                    <option value="Persian">Persian</option>
+                    <option value="Polish">Polish</option>
+                    <option value="Portuguese (Brazilian)">Portuguese (Brazilian)</option>
+                    <option value="Portuguese (European)">Portuguese (European)</option>
+                    <option value="Romanian">Romanian</option>
+                    <option value="Russian">Russian</option>
+                    <option value="Serbian">Serbian</option>
+                    <option value="Sinhala">Sinhala</option>
+                    <option value="Slovak">Slovak</option>
+                    <option value="Slovenian">Slovenian</option>
+                    <option value="Spanish">Spanish</option>
+                    <option value="Swahili">Swahili</option>
+                    <option value="Swedish">Swedish</option>
+                    <option value="Tajik">Tajik</option>
+                    <option value="Thai">Thai</option>
+                    <option value="Turkish">Turkish</option>
+                    <option value="Turkmen">Turkmen</option>
+                    <option value="Ukrainian">Ukrainian</option>
+                    <option value="Urdu">Urdu</option>
+                    <option value="Uzbek">Uzbek</option>
+                    <option value="Vietnamese">Vietnamese</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Country/Region</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={data.country || 'United States'}
+                    onChange={(e) => updateData({ country: e.target.value })}
+                  >
+                    <option value="United States">United States</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Germany">Germany</option>
+                    <option value="France">France</option>
+                    <option value="Spain">Spain</option>
+                    <option value="Italy">Italy</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Mexico">Mexico</option>
+                    <option value="India">India</option>
+                    <option value="Global">Global</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-sm font-medium">Target Audience</label>
+                  <button
+                    onClick={handleGenerateTargetAudience}
+                    disabled={isGeneratingTargetAudience}
+                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+                  >
+                    {isGeneratingTargetAudience ? (
+                      <>
+                        <Spinner size="sm" className="mr-1" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate'
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  value={data.targetAudience || ''}
+                  onChange={(e) => updateData({ targetAudience: e.target.value })}
+                  placeholder="Describe your target audience"
+                  className="w-full p-2 border rounded-md"
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-sm font-medium">SEO Keywords</label>
+                  <button
+                    onClick={handleGenerateSEOKeywords}
+                    disabled={isGeneratingSEOKeywords}
+                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+                  >
+                    {isGeneratingSEOKeywords ? (
+                      <>
+                        <Spinner size="sm" className="mr-1" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate'
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  value={data.seoKeywords || ''}
+                  onChange={(e) => updateData({ seoKeywords: e.target.value })}
+                  placeholder="SEO keywords for your content"
+                  className="w-full p-2 border rounded-md"
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-sm font-medium">Long Tail Keywords</label>
+                  <button
+                    onClick={handleGenerateLongTail}
+                    disabled={isGeneratingLongTail}
+                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+                  >
+                    {isGeneratingLongTail ? (
+                      <>
+                        <Spinner size="sm" className="mr-1" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate'
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  value={data.longTailKeywords || ''}
+                  onChange={(e) => updateData({ longTailKeywords: e.target.value })}
+                  placeholder="Long tail keyword variations (3-5 word phrases)"
+                  className="w-full p-2 border rounded-md"
+                  rows={3}
+                />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-sm font-medium">FAQs</label>
+                  <button
+                    onClick={handleGenerateFAQs}
+                    disabled={isGeneratingFAQs}
+                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+                  >
+                    {isGeneratingFAQs ? (
+                      <>
+                        <Spinner size="sm" className="mr-1" />
+                        Generating...
+                      </>
+                    ) : (
+                      'Generate'
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  value={data.faqs || ''}
+                  onChange={(e) => updateData({ faqs: e.target.value })}
+                  placeholder="FAQs to include in the content"
+                  className="w-full p-2 border rounded-md"
+                  rows={4}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Additional Instructions</label>
+                <textarea
+                  value={data.additionalInstructions || ''}
+                  onChange={(e) => updateData({ additionalInstructions: e.target.value })}
+                  placeholder="Any additional instructions for the content"
+                  className="w-full p-2 border rounded-md"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
         </div>
         
-        {/* Content Settings Tab */}
-        {activeTab === 'content' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Core Settings Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('coreSettings')}
+          >
+            <Sliders className="h-4 w-4" />
+            <span className="font-medium">Core Settings</span>
+            <span className="ml-auto">{expandedSections.coreSettings ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.coreSettings && (
+            <div className="mt-3 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="word-count">Word Count</label>
+                <label className="block text-sm font-medium mb-1">Article Type</label>
                 <select
-                  id="word-count"
+                  className="w-full p-2 border rounded-md"
+                  value={data.articleType || 'None'}
+                  onChange={(e) => updateData({ articleType: e.target.value })}
+                >
+                  <option value="None">None</option>
+                  <option value="How-to guide">How-to guide</option>
+                  <option value="Listicle">Listicle</option>
+                  <option value="Product review">Product review</option>
+                  <option value="News">News</option>
+                  <option value="Comparison">Comparison</option>
+                  <option value="Case study">Case study</option>
+                  <option value="Opinion piece">Opinion piece</option>
+                  <option value="Tutorial">Tutorial</option>
+                  <option value="Roundup post">Roundup post</option>
+                  <option value="Q&A page">Q&A page</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Article Size</label>
+                <select
+                  className="w-full p-2 border rounded-md"
                   value={data.wordCount || 'medium'}
                   onChange={(e) => updateData({ wordCount: e.target.value })}
-                  className="w-full p-2 border rounded-md"
                 >
-                  <option value="small">Small (~800 words)</option>
-                  <option value="medium">Medium (~1200 words)</option>
-                  <option value="large">Large (~2000 words)</option>
+                  <option value="x-small">X-Small (600-1200 words, 2-5 H2)</option>
+                  <option value="small">Small (1200-2400 words, 5-8 H2)</option>
+                  <option value="medium">Medium (2400-3600 words, 9-12 H2)</option>
+                  <option value="large">Large (3600-5200 words, 13-16 H2)</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="tone">Tone</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-sm font-medium">Tone of Voice</label>
+                  <span className="text-xs text-gray-400">0/50</span>
+                </div>
                 <select
-                  id="tone"
+                  className="w-full p-2 border rounded-md"
                   value={data.tone || 'Professional'}
                   onChange={(e) => updateData({ tone: e.target.value })}
-                  className="w-full p-2 border rounded-md"
                 >
-                  <option value="Professional">Professional</option>
-                  <option value="Conversational">Conversational</option>
+                  <option value="None">None</option>
                   <option value="Friendly">Friendly</option>
+                  <option value="Professional">Professional</option>
+                  <option value="Informational">Informational</option>
+                  <option value="Transactional">Transactional</option>
+                  <option value="Inspirational">Inspirational</option>
+                  <option value="Neutral">Neutral</option>
+                  <option value="Witty">Witty</option>
+                  <option value="Casual">Casual</option>
                   <option value="Authoritative">Authoritative</option>
-                  <option value="Humorous">Humorous</option>
+                  <option value="Encouraging">Encouraging</option>
+                  <option value="Persuasive">Persuasive</option>
+                  <option value="Poetic">Poetic</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="readability">Readability Level</label>
+                <label className="block text-sm font-medium mb-1">Point of View</label>
                 <select
-                  id="readability"
-                  value={data.textReadability || '8th & 9th grade'}
-                  onChange={(e) => updateData({ textReadability: e.target.value })}
                   className="w-full p-2 border rounded-md"
+                  value={data.pointOfView || 'None'}
+                  onChange={(e) => updateData({ pointOfView: e.target.value })}
                 >
-                  <option value="8th & 9th grade">8th & 9th grade (Standard)</option>
-                  <option value="6th & 7th grade">Simple (6th & 7th grade)</option>
-                  <option value="10th & 11th grade">Advanced (10th & 11th grade)</option>
-                  <option value="College">Expert (College level)</option>
+                  <option value="None">None</option>
+                  <option value="First Person">First Person (I, We)</option>
+                  <option value="Second Person">Second Person (You)</option>
+                  <option value="Third Person">Third Person (He, She, They)</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="output-format">Output Format</label>
-                <select
-                  id="output-format"
-                  value={data.outputFormat || 'blogPost'}
-                  onChange={(e) => updateData({ outputFormat: e.target.value as 'standard' | 'blogPost' })}
+                <label className="block text-sm font-medium mb-1">Brand Voice</label>
+                <textarea
+                  value={data.brandVoice || ''}
+                  onChange={(e) => updateData({ brandVoice: e.target.value })}
+                  placeholder="Describe your brand voice"
                   className="w-full p-2 border rounded-md"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Text Settings Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('textSettings')}
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="font-medium">Text Settings</span>
+            <span className="ml-auto">{expandedSections.textSettings ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.textSettings && (
+            <div className="mt-3 space-y-4">
+              <div>
+                <div className="flex items-center mb-1">
+                  <label className="text-sm font-medium">Text Readability</label>
+                  <HelpCircle className="h-4 w-4 text-gray-400 ml-1" />
+                </div>
+                <div className="relative">
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={data.textReadability || '8th & 9th grade'}
+                    onChange={(e) => updateData({ textReadability: e.target.value })}
+                  >
+                    <option value="None">None</option>
+                    <option value="5th grade">5th grade, easily understood by 11-year-olds</option>
+                    <option value="6th grade">6th grade, easy to read. Conversational language</option>
+                    <option value="7th grade">7th grade, fairly easy to read</option>
+                    <option value="8th & 9th grade">8th & 9th grade, easily understood</option>
+                    <option value="10th to 12th grade">10th to 12th grade, fairly difficult to read</option>
+                    <option value="College">College, difficult to read</option>
+                    <option value="College graduate">College graduate, very difficult to read</option>
+                    <option value="Professional">Professional, extremely difficult to read</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span className="text-xs text-gray-400">Recommended</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex items-center mb-1">
+                  <label className="text-sm font-medium">AI Content Cleaning</label>
+                  <HelpCircle className="h-4 w-4 text-gray-400 ml-1" />
+                </div>
+                <select
+                  className="w-full p-2 border rounded-md"
+                  value={data.aiContentCleaning || 'No AI Words Removal'}
+                  onChange={(e) => updateData({ aiContentCleaning: e.target.value })}
+                >
+                  <option value="No AI Words Removal">No AI Words Removal</option>
+                  <option value="Basic AI Words Removal">Basic AI Words Removal</option>
+                  <option value="Extended AI Words Removal">Extended AI Words Removal</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Output Format</label>
+                <select
+                  className="w-full p-2 border rounded-md"
+                  value={data.outputFormat || 'blogPost'}
+                  onChange={(e) => updateData({ outputFormat: e.target.value as 'blogPost' | 'standard' })}
                 >
                   <option value="blogPost">Blog Post (Rich Format)</option>
                   <option value="standard">Standard Content</option>
                 </select>
               </div>
             </div>
-            
-            <div>
-              <h4 className="text-sm font-medium mb-2">Content Elements</h4>
+          )}
+        </div>
+        
+        {/* SEO Settings Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('seoSettings')}
+          >
+            <Search className="h-4 w-4" />
+            <span className="font-medium">SEO Settings</span>
+            <span className="ml-auto">{expandedSections.seoSettings ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.seoSettings && (
+            <div className="mt-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="includeBold"
+                    checked={data.includeBold !== false}
+                    onChange={(e) => updateData({ includeBold: e.target.checked })}
+                    className="mr-2 h-4 w-4"
+                  />
+                  <label htmlFor="includeBold" className="text-sm">Include Bold Keywords</label>
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="includeH3"
+                    checked={data.includeH3 !== false}
+                    onChange={(e) => updateData({ includeH3: e.target.checked })}
+                    className="mr-2 h-4 w-4"
+                  />
+                  <label htmlFor="includeH3" className="text-sm">Include H3 Tags</label>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Structure Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('structure')}
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="font-medium">Structure</span>
+            <span className="ml-auto">{expandedSections.structure ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.structure && (
+            <div className="mt-3 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Introductory Hook Type</label>
+                <select
+                  className="w-full p-2 border rounded-md"
+                  value={data.introductoryHook || ''}
+                  onChange={handleHookTypeChange}
+                >
+                  <option value="">None</option>
+                  <option value="Question">Question</option>
+                  <option value="Statistical or Fact">Statistical or Fact</option>
+                  <option value="Quotation">Quotation</option>
+                  <option value="Anecdotal or Story">Anecdotal or Story</option>
+                  <option value="Personal or Emotional">Personal or Emotional</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Hook Instructions</label>
+                <textarea
+                  value={data.customHook || ''}
+                  onChange={(e) => updateData({ customHook: e.target.value })}
+                  placeholder="Instructions for the hook"
+                  className="w-full p-2 border rounded-md resize-y"
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Document Elements Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('documentElements')}
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="font-medium">Document Elements</span>
+            <span className="ml-auto">{expandedSections.documentElements ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.documentElements && (
+            <div className="mt-3">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
                 <div className="flex items-start space-x-2">
                   <input 
@@ -682,320 +1293,260 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
                 </div>
               </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="additional-instructions">Additional Instructions</label>
-              <textarea
-                id="additional-instructions"
-                value={data.additionalInstructions || ''}
-                onChange={(e) => updateData({ additionalInstructions: e.target.value })}
-                placeholder="Any specific instructions for content generation..."
-                className="w-full p-2 border rounded-md min-h-[100px]"
-              ></textarea>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
         
-        {/* Image Prompts Tab */}
-        {activeTab === 'images' && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="number-of-image-prompts">Number of Image Suggestions</label>
-              <select
-                id="number-of-image-prompts"
-                value={data.imageSettings?.numberOfImagePrompts?.toString() || '5'}
-                onChange={(e) => updateImageSettings({ numberOfImagePrompts: parseInt(e.target.value) })}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="3">3 Images</option>
-                <option value="5">5 Images</option>
-                <option value="7">7 Images</option>
-                <option value="10">10 Images</option>
-              </select>
+        {/* Image Settings Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('imageSettings')}
+          >
+            <Image className="h-4 w-4" />
+            <span className="font-medium">Image Settings</span>
+            <span className="ml-auto">{expandedSections.imageSettings ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.imageSettings && (
+            <div className="mt-3 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Number of Image Suggestions</label>
+                <select
+                  value={data.imageSettings?.numberOfImagePrompts?.toString() || '5'}
+                  onChange={(e) => updateImageSettings({ numberOfImagePrompts: parseInt(e.target.value) })}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="3">3 Images</option>
+                  <option value="5">5 Images</option>
+                  <option value="7">7 Images</option>
+                  <option value="10">10 Images</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Image Prompt Style</label>
+                <select
+                  value={data.imageSettings?.imagePromptStyle || 'detailed'}
+                  onChange={(e) => updateImageSettings({ imagePromptStyle: e.target.value as any })}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="simple">Simple (Brief descriptions)</option>
+                  <option value="detailed">Detailed (Comprehensive descriptions)</option>
+                  <option value="creative">Creative (Imaginative concepts)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Image Distribution</label>
+                <select
+                  value={data.imageSettings?.imageDistribution || 'balanced'}
+                  onChange={(e) => updateImageSettings({ imageDistribution: e.target.value as any })}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="header-only">Header Focus (Beginning of sections)</option>
+                  <option value="balanced">Balanced (Evenly throughout)</option>
+                  <option value="throughout">Throughout (Including subsections)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Custom Image Instructions</label>
+                <textarea
+                  value={data.imageSettings?.customImagePrompts || ''}
+                  onChange={(e) => updateImageSettings({ customImagePrompts: e.target.value })}
+                  placeholder="Any specific instructions for image generation..."
+                  className="w-full p-2 border rounded-md"
+                  rows={3}
+                />
+              </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="image-prompt-style">Image Prompt Style</label>
-              <select
-                id="image-prompt-style"
-                value={data.imageSettings?.imagePromptStyle || 'detailed'}
-                onChange={(e) => updateImageSettings({ imagePromptStyle: e.target.value as any })}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="simple">Simple (Brief descriptions)</option>
-                <option value="detailed">Detailed (Comprehensive descriptions)</option>
-                <option value="creative">Creative (Imaginative concepts)</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="image-distribution">Image Distribution</label>
-              <select
-                id="image-distribution"
-                value={data.imageSettings?.imageDistribution || 'balanced'}
-                onChange={(e) => updateImageSettings({ imageDistribution: e.target.value as any })}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="header-only">Header Focus (Beginning of sections)</option>
-                <option value="balanced">Balanced (Evenly throughout)</option>
-                <option value="throughout">Throughout (Including subsections)</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="custom-image-prompts">Custom Image Instructions</label>
-              <textarea
-                id="custom-image-prompts"
-                value={data.imageSettings?.customImagePrompts || ''}
-                onChange={(e) => updateImageSettings({ customImagePrompts: e.target.value })}
-                placeholder="Any specific instructions for image generation..."
-                className="w-full p-2 border rounded-md min-h-[100px]"
-              ></textarea>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
         
-        {/* Opt-In Tab */}
-        {activeTab === 'optin' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium" htmlFor="enable-optin">Enable Email Opt-In Form</label>
-              <input
-                type="checkbox"
-                id="enable-optin"
-                checked={data.optInSettings?.enableOptIn === true}
-                onChange={(e) => updateOptInSettings({ enableOptIn: e.target.checked })}
-                className="h-4 w-4"
-              />
+        {/* Opt-In Form Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('optInSettings')}
+          >
+            <Mail className="h-4 w-4" />
+            <span className="font-medium">Opt-In Form</span>
+            <span className="ml-auto">{expandedSections.optInSettings ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.optInSettings && (
+            <div className="mt-3 space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Enable Email Opt-In Form</label>
+                <input
+                  type="checkbox"
+                  checked={data.optInSettings?.enableOptIn === true}
+                  onChange={(e) => updateOptInSettings({ enableOptIn: e.target.checked })}
+                  className="h-4 w-4"
+                />
+              </div>
+              
+              {data.optInSettings?.enableOptIn && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Opt-In Text</label>
+                    <input
+                      type="text"
+                      value={data.optInSettings?.optInText || 'Subscribe to our newsletter for more content like this'}
+                      onChange={(e) => updateOptInSettings({ optInText: e.target.value })}
+                      placeholder="Enter opt-in text prompt"
+                      className="w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Placement</label>
+                    <select
+                      value={data.optInSettings?.optInPlacement || 'bottom'}
+                      onChange={(e) => updateOptInSettings({ optInPlacement: e.target.value as any })}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="top">Top of Content</option>
+                      <option value="bottom">Bottom of Content</option>
+                      <option value="after-content">After Main Content (Before Conclusion)</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Design Style</label>
+                    <select
+                      value={data.optInSettings?.optInDesign || 'standard'}
+                      onChange={(e) => updateOptInSettings({ optInDesign: e.target.value as any })}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="standard">Standard</option>
+                      <option value="minimalist">Minimalist</option>
+                      <option value="prominent">Prominent</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">Make Opt-In Required</label>
+                    <input
+                      type="checkbox"
+                      checked={data.optInSettings?.optInRequired === true}
+                      onChange={(e) => updateOptInSettings({ optInRequired: e.target.checked })}
+                      className="h-4 w-4"
+                    />
+                  </div>
+                </>
+              )}
             </div>
-            
-            {data.optInSettings?.enableOptIn && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="optin-text">Opt-In Text</label>
-                  <input
-                    type="text"
-                    id="optin-text"
-                    value={data.optInSettings?.optInText || 'Subscribe to our newsletter for more content like this'}
-                    onChange={(e) => updateOptInSettings({ optInText: e.target.value })}
-                    placeholder="Enter opt-in text prompt"
+          )}
+        </div>
+        
+        {/* Internal Linking Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('internalLinking')}
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="font-medium">Internal Linking</span>
+            <span className="ml-auto">{expandedSections.internalLinking ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.internalLinking && (
+            <div className="mt-3 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Website URL</label>
+                <input
+                  type="text"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                  placeholder="Your website URL (e.g., https://example.com)"
+                  className="w-full p-2 border rounded-md"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Website URLs/Sitemap</label>
+                <textarea
+                  value={websiteUrls}
+                  onChange={(e) => setWebsiteUrls(e.target.value)}
+                  placeholder="Paste your website URLs or sitemap content here"
+                  className="w-full p-2 border rounded-md"
+                  rows={4}
+                />
+              </div>
+              
+              <div className="flex items-start justify-between">
+                <div className="flex-grow">
+                  <label className="block text-sm font-medium mb-1">Internal Links</label>
+                  <textarea
+                    value={data.internalLinkingWebsite || ''}
+                    onChange={(e) => updateData({ internalLinkingWebsite: e.target.value })}
+                    placeholder="Internal links for your content"
                     className="w-full p-2 border rounded-md"
+                    rows={4}
                   />
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="optin-placement">Placement</label>
-                  <select
-                    id="optin-placement"
-                    value={data.optInSettings?.optInPlacement || 'bottom'}
-                    onChange={(e) => updateOptInSettings({ optInPlacement: e.target.value as any })}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="top">Top of Content</option>
-                    <option value="bottom">Bottom of Content</option>
-                    <option value="after-content">After Main Content (Before Conclusion)</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="optin-design">Design Style</label>
-                  <select
-                    id="optin-design"
-                    value={data.optInSettings?.optInDesign || 'standard'}
-                    onChange={(e) => updateOptInSettings({ optInDesign: e.target.value as any })}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="standard">Standard</option>
-                    <option value="minimalist">Minimalist</option>
-                    <option value="prominent">Prominent</option>
-                  </select>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium" htmlFor="optin-required">Make Opt-In Required</label>
-                  <input
-                    type="checkbox"
-                    id="optin-required"
-                    checked={data.optInSettings?.optInRequired === true}
-                    onChange={(e) => updateOptInSettings({ optInRequired: e.target.checked })}
-                    className="h-4 w-4"
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-        
-        {/* SEO Options Tab with Generation Buttons */}
-        {activeTab === 'seo' && (
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium" htmlFor="seo-keywords">SEO Keywords</label>
-                <button
-                  onClick={handleGenerateSEOKeywords}
-                  disabled={isGeneratingSEOKeywords}
-                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
-                >
-                  {isGeneratingSEOKeywords ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="h-3 w-3 mr-1" /> Generate
-                    </>
-                  )}
-                </button>
-              </div>
-              <textarea
-                id="seo-keywords"
-                value={data.seoKeywords || ''}
-                onChange={(e) => updateData({ seoKeywords: e.target.value })}
-                placeholder="Enter secondary keywords (separated by commas)"
-                className="w-full p-2 border rounded-md"
-                rows={3}
-              ></textarea>
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium" htmlFor="long-tail-keywords">Long Tail Keywords</label>
-                <button
-                  onClick={handleGenerateLongTail}
-                  disabled={isGeneratingLongTail}
-                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
-                >
-                  {isGeneratingLongTail ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="h-3 w-3 mr-1" /> Generate
-                    </>
-                  )}
-                </button>
-              </div>
-              <textarea
-                id="long-tail-keywords"
-                value={data.longTailKeywords || ''}
-                onChange={(e) => updateData({ longTailKeywords: e.target.value })}
-                placeholder="Enter long-tail keyword variations"
-                className="w-full p-2 border rounded-md"
-                rows={3}
-              ></textarea>
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium" htmlFor="internal-links">Internal Linking</label>
                 <button
                   onClick={handleGenerateInternalLinks}
-                  disabled={isGeneratingInternalLinks}
-                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+                  disabled={isGeneratingInternalLinks || !websiteUrl || !websiteUrls}
+                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center mt-7 ml-2"
                 >
                   {isGeneratingInternalLinks ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <Spinner size="sm" className="mr-1" />
                       Generating...
                     </>
                   ) : (
-                    <>
-                      <RefreshCw className="h-3 w-3 mr-1" /> Generate
-                    </>
+                    'Generate'
                   )}
                 </button>
               </div>
-              <textarea
-                id="internal-links"
-                value={data.internalLinkingWebsite || ''}
-                onChange={(e) => updateData({ internalLinkingWebsite: e.target.value })}
-                placeholder="URLs to internal pages for linking"
-                className="w-full p-2 border rounded-md"
-                rows={3}
-              ></textarea>
             </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium" htmlFor="external-links">External Linking</label>
+          )}
+        </div>
+        
+        {/* External Linking Section */}
+        <div className="w-full border rounded-md p-4 mb-4">
+          <button 
+            className="flex items-center gap-2 w-full text-left"
+            onClick={() => toggleSection('externalLinking')}
+          >
+            <HelpCircle className="h-4 w-4" />
+            <span className="font-medium">External Linking</span>
+            <span className="ml-auto">{expandedSections.externalLinking ? <ChevronUp className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}</span>
+          </button>
+          
+          {expandedSections.externalLinking && (
+            <div className="mt-3">
+              <div className="flex justify-between items-start">
+                <div className="flex-grow">
+                  <label className="block text-sm font-medium mb-1">External Links</label>
+                  <textarea
+                    value={data.externalLinkType || ''}
+                    onChange={(e) => updateData({ externalLinkType: e.target.value })}
+                    placeholder="External links for your content"
+                    className="w-full p-2 border rounded-md"
+                    rows={4}
+                  />
+                </div>
                 <button
                   onClick={handleGenerateExternalLinks}
                   disabled={isGeneratingExternalLinks}
-                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center mt-7 ml-2"
                 >
                   {isGeneratingExternalLinks ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <Spinner size="sm" className="mr-1" />
                       Generating...
                     </>
                   ) : (
-                    <>
-                      <RefreshCw className="h-3 w-3 mr-1" /> Generate
-                    </>
+                    'Generate'
                   )}
                 </button>
               </div>
-              <textarea
-                id="external-links"
-                value={data.externalLinkType || ''}
-                onChange={(e) => updateData({ externalLinkType: e.target.value })}
-                placeholder="Suggested external resources to reference"
-                className="w-full p-2 border rounded-md"
-                rows={3}
-              ></textarea>
             </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-medium" htmlFor="faqs">FAQ Content</label>
-                <button
-                  onClick={handleGenerateFAQs}
-                  disabled={isGeneratingFAQs}
-                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
-                >
-                  {isGeneratingFAQs ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="h-3 w-3 mr-1" /> Generate
-                    </>
-                  )}
-                </button>
-              </div>
-              <textarea
-                id="faqs"
-                value={data.faqs || ''}
-                onChange={(e) => updateData({ faqs: e.target.value })}
-                placeholder="Questions to address in the FAQ section"
-                className="w-full p-2 border rounded-md"
-                rows={4}
-              ></textarea>
-              <p className="text-xs text-gray-500 mt-1">Generated FAQs will be optimized for Google's "People Also Ask" feature.</p>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="flex justify-between">
@@ -1008,7 +1559,7 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
         </button>
         
         <button
-          id="next-step-button" // Add a clear ID for debugging
+          id="next-step-button"
           onClick={handleNextStepClick}
           className="p-3 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white flex items-center"
         >

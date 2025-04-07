@@ -1,69 +1,73 @@
-// src/features/blog-content-generator/components/ContentStep.tsx
-
 import React, { useState, useEffect } from 'react';
 import { Copy, CheckCircle, ArrowLeft, ArrowRight, RefreshCw, Edit, Utensils, Settings, Sliders, AlertCircle, Server, Key } from 'lucide-react';
 import { generateContent, generateRecipeContent } from '../utils/blogContentGenerator';
 import { StepProps, Provider } from '../types';
 import AdvancedContentSettings from './AdvancedContentSettings';
 
-export const ContentStep: React.FC<StepProps> = ({ 
-  data, 
-  updateData, 
+export const ContentStep: React.FC<StepProps> = ({
+  data,
+  updateData,
   onNextStep,
-  onPrevStep 
+  onPrevStep
 }) => {
+  // --- State Variables ---
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showApiSettings, setShowApiSettings] = useState(true);
+  const [showApiSettings, setShowApiSettings] = useState(true); // Default to showing API settings
   const [showContentSettings, setShowContentSettings] = useState(false);
   const [apiKeyWarning, setApiKeyWarning] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState('');
-  
-  // Initialize API settings if they don't exist
+  const [apiKey, setApiKey] = useState(''); // State to hold the API key input
+
+  // --- Effects ---
+
+  // Initialize API settings and load API key on mount
   useEffect(() => {
+    // Default API settings if not present
     if (!data.apiSettings?.contentApiProvider) {
-      // Default to OpenAI
-      const contentApiProvider = 'openai';
-      const contentApiModel = 'gpt-4o-mini';
-      
-      const recipeApiProvider = 'openai';
-      const recipeApiModel = 'gpt-4o-mini';
-      
+      const defaultSettings = {
+        contentApiProvider: 'openai' as Provider,
+        contentApiModel: 'gpt-4o-mini',
+        recipeApiProvider: 'openai' as Provider,
+        recipeApiModel: 'gpt-4o-mini',
+      };
       updateData({
         apiSettings: {
           ...data.apiSettings,
-          contentApiProvider,
-          contentApiModel,
-          recipeApiProvider,
-          recipeApiModel
+          ...defaultSettings,
         }
       });
     }
-    
-    // Load API key from localStorage
-    const provider = data.isRecipe 
+
+    // Determine the current provider based on content type
+    const currentProvider = data.isRecipe
       ? (data.apiSettings?.recipeApiProvider || 'openai')
       : (data.apiSettings?.contentApiProvider || 'openai');
-    
-    const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
+
+    // Load API key from localStorage for the current provider
+    const savedKey = localStorage.getItem(`${currentProvider}_api_key`) || localStorage.getItem('api_key') || ''; // Fallback to generic 'api_key'
     setApiKey(savedKey);
-    verifyApiKey(provider);
-  }, []);
-  
+    verifyApiKey(currentProvider); // Verify if a key exists
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.isRecipe, data.apiSettings?.recipeApiProvider, data.apiSettings?.contentApiProvider]); // Rerun if recipe type or providers change
+
+  // --- Helper Functions ---
+
+  // Verifies if an API key exists in localStorage for the given provider
   const verifyApiKey = (provider: Provider) => {
     const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
     if (!key) {
-      setApiKeyWarning(`No API key found for ${provider}. Please enter your API key below.`);
+      setApiKeyWarning(`No API key found for ${getProviderName(provider)}. Please enter and save your API key.`);
     } else {
-      setApiKeyWarning(null);
+      setApiKeyWarning(null); // Clear warning if key exists
     }
   };
-  
-  // Model presets for each provider
-  const modelPresets = {
+
+  // Model presets for different AI providers
+  const modelPresets: Record<Provider, { id: string; name: string; description: string }[]> = {
     openai: [
       { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast & affordable' },
       { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Balanced' },
@@ -72,43 +76,59 @@ export const ContentStep: React.FC<StepProps> = ({
     claude: [
       { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fast & affordable' },
       { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced' },
-      { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', description: 'Most capable' }
+      { id: 'claude-3-5-sonnet-20240620', name: 'Claude 3.5 Sonnet', description: 'Most capable' } // Updated model ID
     ],
     perplexity: [
       { id: 'llama-3.1-sonar-small-128k-online', name: 'Llama 3.1 Sonar (Small)', description: 'Fast & affordable' },
-      { id: 'sonar-medium-online', name: 'Sonar Medium', description: 'Balanced' },
+      { id: 'sonar-medium-online', name: 'Sonar Medium', description: 'Balanced' }, // Assuming this is a valid ID
       { id: 'llama-3.1-sonar-large-256k-online', name: 'Llama 3.1 Sonar (Large)', description: 'Most capable' }
     ],
     deepseek: [
-      { id: 'deepseek-llm-67b-chat', name: 'DeepSeek LLM 67B Chat', description: 'General-purpose' },
-      { id: 'deepseek-coder-33b-instruct', name: 'DeepSeek Coder 33B', description: 'Code-focused' },
-      { id: 'deepseek-math-7b-instruct', name: 'DeepSeek Math 7B', description: 'Math-focused' },
-      { id: 'deepseek-llm-7b-chat', name: 'DeepSeek LLM 7B Chat', description: 'Lightweight general-purpose' }
-    ]
+      { id: 'deepseek-chat', name: 'DeepSeek Chat (Default)', description: 'General-purpose' }, // Simplified default
+      { id: 'deepseek-coder', name: 'DeepSeek Coder (Default)', description: 'Code-focused' }, // Simplified default
+      // Add other specific DeepSeek models if needed, e.g., deepseek-llm-67b-chat
+    ],
+    // 'custom' provider has no presets, models are defined by the user elsewhere
+    custom: [],
   };
-  
+
+  // Gets the display name for a provider ID
+  const getProviderName = (provider: Provider): string => {
+    switch (provider) {
+      case 'openai': return 'OpenAI';
+      case 'claude': return 'Anthropic Claude';
+      case 'perplexity': return 'Perplexity';
+      case 'deepseek': return 'DeepSeek';
+      case 'custom': return 'Custom API'; // Added custom provider name
+      default: return 'API';
+    }
+  };
+
+  // --- Event Handlers ---
+
+  // Handles toggling between Blog Post and Recipe Post
   const handleRecipeTypeToggle = (isRecipe: boolean) => {
-    updateData({ 
+    updateData({
       isRecipe,
-      // Initialize recipe name if toggling to recipe mode
+      // Initialize recipe name if switching to recipe mode and it's empty
       recipeName: isRecipe && !data.recipeName ? data.relatedTerm || data.focusKeyword : data.recipeName
     });
-    
-    // Update API key for the appropriate provider
-    const provider = isRecipe 
+
+    // Update API key state and verification for the potentially new provider
+    const provider = isRecipe
       ? (data.apiSettings?.recipeApiProvider || 'openai')
       : (data.apiSettings?.contentApiProvider || 'openai');
-    
     const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
     setApiKey(savedKey);
     verifyApiKey(provider);
   };
-  
+
+  // Handles changing the AI provider
   const handleProviderChange = (provider: Provider) => {
-    // Set default model for the new provider
+    // Set the default model for the newly selected provider
     const defaultModel = modelPresets[provider]?.[0]?.id || '';
-    
-    // Update appropriate provider based on content type
+
+    // Update the correct provider and model based on the current content type
     if (data.isRecipe) {
       updateData({
         apiSettings: {
@@ -126,114 +146,115 @@ export const ContentStep: React.FC<StepProps> = ({
         }
       });
     }
-    
-    // Load API key for the new provider
+
+    // Load and verify the API key for the new provider
     const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
     setApiKey(savedKey);
     verifyApiKey(provider);
   };
-  
+
+  // Handles changing the AI model
   const handleModelChange = (model: string) => {
-    // Update appropriate model based on content type
+    // Update the correct model based on the current content type
     if (data.isRecipe) {
       updateData({
-        apiSettings: {
-          ...data.apiSettings,
-          recipeApiModel: model
-        }
+        apiSettings: { ...data.apiSettings, recipeApiModel: model }
       });
     } else {
       updateData({
-        apiSettings: {
-          ...data.apiSettings,
-          contentApiModel: model
-        }
+        apiSettings: { ...data.apiSettings, contentApiModel: model }
       });
     }
   };
-  
+
+  // Saves the entered API key to localStorage
   const handleSaveApiKey = () => {
-    const provider = data.isRecipe 
+    const provider = data.isRecipe
       ? (data.apiSettings?.recipeApiProvider || 'openai')
       : (data.apiSettings?.contentApiProvider || 'openai');
-    
+
+    if (!apiKey) {
+        setError(`Please enter an API key for ${getProviderName(provider)}.`);
+        return;
+    }
+
     // Save to provider-specific key
     localStorage.setItem(`${provider}_api_key`, apiKey);
-    
-    // Also save as global key for backward compatibility
+    // Also save as generic key for potential fallback/other uses
     localStorage.setItem('api_key', apiKey);
-    
-    // Clear warning
+
+    // Clear warning and show success message
     setApiKeyWarning(null);
+    setError(null); // Clear any previous errors
     setSuccessMessage('API key saved successfully!');
-    
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      setSuccessMessage(null);
-    }, 3000);
+    setTimeout(() => setSuccessMessage(null), 3000); // Clear message after 3s
   };
 
+  // Handles the generation of content (Blog or Recipe)
   const handleGenerateContent = async () => {
-    // Modified to remove outline check
-    if (data.isRecipe && !data.recipeName) {
-      setError('Please enter a recipe name');
+    // Basic validation
+    if (data.isRecipe && !data.recipeName?.trim()) {
+      setError('Please enter a recipe name.');
       return;
     }
+     if (!data.isRecipe && !data.selectedTitle?.trim()) {
+        setError('Please ensure a Meta Title is selected from the previous step.');
+        return;
+    }
 
-    // Check if API key exists
-    const provider = data.isRecipe 
+    // Determine provider and check for API key
+    const provider = data.isRecipe
       ? (data.apiSettings?.recipeApiProvider || 'openai')
       : (data.apiSettings?.contentApiProvider || 'openai');
-    
+    const model = data.isRecipe
+      ? (data.apiSettings?.recipeApiModel || '')
+      : (data.apiSettings?.contentApiModel || '');
+
     const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
-    
+
     if (!key) {
-      setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
+      setError(`No API key found for ${getProviderName(provider)}. Please enter and save your API key in the settings.`);
       return;
     }
+     if (!model) {
+        setError(`No model selected for ${getProviderName(provider)}. Please select a model in the settings.`);
+        return;
+    }
 
+
+    // Start loading state
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
       let result;
-      
+      const commonParams = {
+        metaTitle: data.selectedTitle,
+        focusKeyword: data.focusKeyword,
+        provider,
+        model, // Pass the selected model
+        apiKey: key, // Pass the API key
+        customApiUrl: data.apiSettings?.customApiUrl, // Pass custom URL if applicable
+        customApiModel: data.apiSettings?.customApiModel // Pass custom model if applicable
+      };
+
       if (data.isRecipe) {
-        // Use the recipe-specific provider
-        const provider = data.apiSettings?.recipeApiProvider || 'openai';
-        console.log(`Generating recipe content with provider: ${provider}`);
-        
+        // Generate Recipe Content
+        console.log(`Generating recipe content with provider: ${provider}, model: ${model}`);
         result = await generateRecipeContent({
-          metaTitle: data.selectedTitle,
-          focusKeyword: data.focusKeyword,
-          recipeName: data.recipeName,
-          provider
+          ...commonParams,
+          recipeName: data.recipeName || '', // Ensure recipeName is passed
         });
-        
-        if (result.error) {
-          setError(result.error);
-        } else {
-          updateData({ 
-            recipeContent: result.content,
-            content: result.content // Also update the general content field
-          });
-        }
       } else {
-        // Use the content-specific provider
-        const provider = data.apiSettings?.contentApiProvider || 'openai';
-        console.log(`Generating content with provider: ${provider}`);
-        
-        // Prepare all content settings to pass to the generateContent function
+        // Generate Blog Content
+        console.log(`Generating blog content with provider: ${provider}, model: ${model}`);
         result = await generateContent({
-          metaTitle: data.selectedTitle,
-          focusKeyword: data.focusKeyword,
-          outline: data.outline || '', // Keep outline optional for backward compatibility
+          ...commonParams,
+          outline: data.outline || '', // Pass outline if available
+          // Pass all advanced content settings
           contentLength: data.contentLength,
           targetAudience: data.targetAudience,
-          provider,
-          
-          // Add all the content settings
           wordCount: data.wordCount,
           tone: data.tone,
           textReadability: data.textReadability,
@@ -246,151 +267,137 @@ export const ContentStep: React.FC<StepProps> = ({
           includeBold: data.includeBold,
           includeKeyTakeaways: data.includeKeyTakeaways,
           includeFAQs: data.includeFAQs,
-          
-          // Add SEO settings
           seoKeywords: data.seoKeywords,
           longTailKeywords: data.longTailKeywords,
           internalLinkingWebsite: data.internalLinkingWebsite,
           externalLinkType: data.externalLinkType,
           faqs: data.faqs,
-          
-          // Add output format
           outputFormat: data.outputFormat,
-          
-          // Add additional instructions
           additionalInstructions: data.additionalInstructions
         });
-        
-        if (result.error) {
-          setError(result.error);
-        } else {
-          updateData({ content: result.content });
-        }
       }
-      
-      setIsEditing(false);
-      setSuccessMessage('Content generated successfully!');
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
+
+      // Handle result
+      if (result.error) {
+        setError(result.error);
+      } else {
+        // Update data with generated content
+        updateData(data.isRecipe
+          ? { recipeContent: result.content, content: result.content } // Sync both for recipe
+          : { content: result.content }
+        );
+        setIsEditing(false); // Exit editing mode after generation
+        setSuccessMessage('Content generated successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
     } catch (err) {
       console.error('Error generating content:', err);
-      
-      // Provide more detailed error message if possible
-      if (err instanceof Error) {
-        setError(`Failed to generate content: ${err.message}`);
-      } else {
-        setError('Failed to generate content. Please try again or try a different provider.');
-      }
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      setError(`Failed to generate content: ${errorMessage}. Please check console or try a different provider/model.`);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // End loading state
     }
   };
 
+  // Copies the generated content to the clipboard
   const handleCopy = () => {
     const contentToCopy = data.isRecipe ? data.recipeContent : data.content;
     if (!contentToCopy) return;
-    
+
     navigator.clipboard.writeText(contentToCopy)
       .then(() => {
         setCopied(true);
         setSuccessMessage('Content copied to clipboard!');
-        
-        // Reset the copied status after 2 seconds
         setTimeout(() => {
           setCopied(false);
           setSuccessMessage(null);
         }, 2000);
       })
       .catch(() => {
-        setError('Failed to copy content');
-        
-        // Clear error after 3 seconds
-        setTimeout(() => {
-          setError(null);
-        }, 3000);
+        setError('Failed to copy content. Please try again or copy manually.');
+        setTimeout(() => setError(null), 3000);
       });
   };
 
+  // Handles changes in the content textarea when editing
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (data.isRecipe) {
-      updateData({ 
-        recipeContent: e.target.value,
-        content: e.target.value // Keep both in sync
-      });
-    } else {
-      updateData({ content: e.target.value });
-    }
+    const newValue = e.target.value;
+    updateData(data.isRecipe
+        ? { recipeContent: newValue, content: newValue } // Keep recipe content synced
+        : { content: newValue }
+    );
   };
 
+  // Toggles the editing state for the content display
   const toggleEditing = () => {
     setIsEditing(!isEditing);
   };
 
+  // --- Render Logic ---
+
+  // Determine which content to display (recipe or blog)
   const contentToDisplay = data.isRecipe ? data.recipeContent : data.content;
-  const canProceed = data.isRecipe ? !!data.recipeContent : !!data.content;
-  
-  // Helper function to get provider display name
-  const getProviderName = (provider: Provider): string => {
-    switch (provider) {
-      case 'openai': return 'OpenAI';
-      case 'claude': return 'Anthropic Claude';
-      case 'perplexity': return 'Perplexity';
-      case 'deepseek': return 'DeepSeek';
-      default: return 'API';
-    }
-  };
-  
-  const currentProvider = data.isRecipe 
+  // Determine if the user can proceed to the next step
+  const canProceed = !!contentToDisplay; // Can proceed if content exists
+
+  // Determine the current provider and model for display
+  const currentProvider = data.isRecipe
     ? (data.apiSettings?.recipeApiProvider || 'openai')
     : (data.apiSettings?.contentApiProvider || 'openai');
-    
-  const currentModel = data.isRecipe 
-    ? (data.apiSettings?.recipeApiModel || 'gpt-4o-mini')
-    : (data.apiSettings?.contentApiModel || 'gpt-4o-mini');
+  const currentModel = data.isRecipe
+    ? (data.apiSettings?.recipeApiModel || '') // Default to empty if not set
+    : (data.apiSettings?.contentApiModel || ''); // Default to empty if not set
+
+  // Available models for the currently selected provider
+  const availableModels = modelPresets[currentProvider] || [];
 
   return (
     <div className="space-y-6">
+      {/* Success Message */}
       {successMessage && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md">
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md shadow-sm">
           {successMessage}
         </div>
       )}
-      
+
+      {/* Error Message */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md shadow-sm">
           {error}
         </div>
       )}
-      
+
+      {/* API Key Warning */}
       {apiKeyWarning && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md flex items-start">
-          <AlertCircle className="h-5 w-5 mr-2 mt-0.5" />
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md flex items-start shadow-sm">
+          <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="font-medium">API Key Warning</p>
+            <p className="font-medium">API Key Required</p>
             <p>{apiKeyWarning}</p>
           </div>
         </div>
       )}
-      
-      <div className="p-6 border rounded-md bg-white shadow-sm">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Step 4: Generate Content</h2>
-          <div className="flex gap-2">
+
+      {/* Main Content Generation Card */}
+      <div className="p-4 md:p-6 border rounded-lg bg-white shadow-md space-y-6">
+        {/* Header and Edit/Copy Buttons */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">Step 4: Generate Content</h2>
+          <div className="flex gap-2 flex-wrap">
             {contentToDisplay && (
               <>
-                <button 
-                  className="flex items-center gap-1 px-3 py-1 border rounded-md bg-gray-100 hover:bg-gray-200"
+                <button
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm border rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
                   onClick={toggleEditing}
+                  aria-label={isEditing ? 'Preview Content' : 'Edit Content'}
                 >
                   <Edit className="h-4 w-4" />
                   <span>{isEditing ? 'Preview' : 'Edit'}</span>
                 </button>
-                <button 
-                  className="flex items-center gap-1 px-3 py-1 border rounded-md bg-gray-100 hover:bg-gray-200"
+                <button
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm border rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
                   onClick={handleCopy}
+                  aria-label="Copy Content"
                 >
                   {copied ? (
                     <>
@@ -408,204 +415,250 @@ export const ContentStep: React.FC<StepProps> = ({
             )}
           </div>
         </div>
-        
+
+        {/* Content Type Toggle */}
         <div className="flex items-center gap-4 mb-6">
-          <span className="text-gray-600">Content Type:</span>
+          <span className="text-sm font-medium text-gray-600">Content Type:</span>
           <div className="flex gap-2">
             <button
               onClick={() => handleRecipeTypeToggle(false)}
-              className={`flex items-center gap-1 px-3 py-1 rounded-md ${!data.isRecipe ? 'bg-indigo-600 text-white' : 'border bg-white'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                !data.isRecipe
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'border bg-white hover:bg-gray-50 text-gray-700'
+              }`}
+              aria-pressed={!data.isRecipe}
             >
               <Edit className="h-4 w-4" />
               <span>Blog Post</span>
             </button>
             <button
               onClick={() => handleRecipeTypeToggle(true)}
-              className={`flex items-center gap-1 px-3 py-1 rounded-md ${data.isRecipe ? 'bg-green-600 text-white' : 'border bg-white'}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                data.isRecipe
+                  ? 'bg-green-600 text-white shadow-sm'
+                  : 'border bg-white hover:bg-gray-50 text-gray-700'
+              }`}
+              aria-pressed={data.isRecipe}
             >
               <Utensils className="h-4 w-4" />
               <span>Recipe Post</span>
             </button>
           </div>
         </div>
-        
-        <div className="space-y-4 mb-6">
-          <div className="w-full border rounded-md p-4">
-            <button 
-              className="flex items-center gap-2 w-full text-left"
+
+        {/* Collapsible Settings Sections */}
+        <div className="space-y-4">
+          {/* API Settings Section */}
+          <div className="w-full border rounded-md bg-gray-50">
+            <button
+              className="flex items-center gap-2 w-full text-left p-3 font-medium text-gray-700 hover:bg-gray-100 rounded-t-md"
               onClick={() => setShowApiSettings(!showApiSettings)}
+              aria-expanded={showApiSettings}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-5 w-5" />
               <span>API Settings</span>
-              <span className="ml-auto">{showApiSettings ? '▲' : '▼'}</span>
+              <span className="ml-auto text-lg">{showApiSettings ? '−' : '+'}</span>
             </button>
-            
             {showApiSettings && (
-              <div className="mt-3 space-y-4">
+              <div className="p-4 space-y-4 border-t">
                 {/* API Provider Selection */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-1">
+                  <label className="block text-sm font-medium mb-2 flex items-center gap-1 text-gray-700">
                     <Server className="h-4 w-4" />
                     <span>Select AI Provider</span>
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {(['openai', 'claude', 'perplexity', 'deepseek'] as Provider[]).map((provider) => (
+                    {(['openai', 'claude', 'perplexity', 'deepseek', 'custom'] as Provider[]).map((provider) => (
                       <button
                         key={provider}
                         onClick={() => handleProviderChange(provider)}
-                        className={`p-2 border rounded-md text-center transition-colors ${
-                          currentProvider === provider 
-                            ? 'bg-blue-100 border-blue-300 font-medium' 
-                            : 'bg-white hover:bg-gray-50'
+                        className={`p-2 border rounded-md text-center text-sm transition-colors ${
+                          currentProvider === provider
+                            ? 'bg-blue-100 border-blue-300 font-medium text-blue-800 ring-1 ring-blue-300'
+                            : 'bg-white hover:bg-gray-50 border-gray-300 text-gray-700'
                         }`}
+                        aria-pressed={currentProvider === provider}
                       >
                         {getProviderName(provider)}
                       </button>
                     ))}
                   </div>
                 </div>
-                
-                {/* Model Selection */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Select {getProviderName(currentProvider)} Model
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    {modelPresets[currentProvider]?.map((model) => (
-                      <button
-                        key={model.id}
-                        onClick={() => handleModelChange(model.id)}
-                        className={`p-3 border rounded-md text-left transition-colors ${
-                          currentModel === model.id 
-                            ? 'bg-blue-100 border-blue-300' 
-                            : 'bg-white hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="font-medium">{model.name}</div>
-                        <div className="text-xs text-gray-500">{model.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
+
+                {/* Model Selection (only if provider is not 'custom') */}
+                 {currentProvider !== 'custom' && availableModels.length > 0 && (
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700">
+                        Select {getProviderName(currentProvider)} Model
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {availableModels.map((model) => (
+                            <button
+                            key={model.id}
+                            onClick={() => handleModelChange(model.id)}
+                            className={`p-3 border rounded-md text-left transition-colors text-sm ${
+                                currentModel === model.id
+                                ? 'bg-blue-100 border-blue-300 ring-1 ring-blue-300'
+                                : 'bg-white hover:bg-gray-50 border-gray-300'
+                            }`}
+                            aria-pressed={currentModel === model.id}
+                            >
+                            <div className="font-medium text-gray-800">{model.name}</div>
+                            <div className="text-xs text-gray-500">{model.description}</div>
+                            </button>
+                        ))}
+                        </div>
+                    </div>
+                 )}
+
+                 {/* Custom API Settings (only if provider is 'custom') */}
+                 {currentProvider === 'custom' && (
+                    <div className="space-y-3">
+                        <div>
+                        <label htmlFor="custom-api-url" className="block text-sm font-medium mb-1 text-gray-700">
+                            Custom API URL
+                        </label>
+                        <input
+                            id="custom-api-url"
+                            type="url"
+                            value={data.apiSettings?.customApiUrl || ''}
+                            onChange={(e) => updateData({ apiSettings: { ...data.apiSettings, customApiUrl: e.target.value } })}
+                            placeholder="e.g., http://localhost:11434/v1/chat/completions"
+                            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                        />
+                        </div>
+                         <div>
+                            <label htmlFor="custom-api-model" className="block text-sm font-medium mb-1 text-gray-700">
+                                Custom API Model Name
+                            </label>
+                            <input
+                                id="custom-api-model"
+                                type="text"
+                                value={data.apiSettings?.customApiModel || ''}
+                                onChange={(e) => updateData({ apiSettings: { ...data.apiSettings, customApiModel: e.target.value } })}
+                                placeholder="e.g., llama3"
+                                className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                            />
+                         </div>
+                    </div>
+                 )}
+
+
                 {/* API Key Input */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-1">
+                  <label className="block text-sm font-medium mb-2 flex items-center gap-1 text-gray-700">
                     <Key className="h-4 w-4" />
                     <span>{getProviderName(currentProvider)} API Key</span>
                   </label>
                   <div className="flex gap-2">
                     <input
-                      type="password"
+                      type="password" // Keep as password for security
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
                       placeholder={`Enter your ${getProviderName(currentProvider)} API key`}
-                      className="flex-grow p-2 border rounded-md"
+                      className="flex-grow p-2 border border-gray-300 rounded-md text-sm"
+                      aria-label={`${getProviderName(currentProvider)} API Key Input`}
                     />
                     <button
                       onClick={handleSaveApiKey}
-                      disabled={!apiKey}
-                      className={`px-3 py-2 rounded-md ${
-                        !apiKey ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      disabled={!apiKey.trim()} // Disable if key is empty or just whitespace
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        !apiKey.trim()
+                          ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
                       }`}
                     >
                       Save Key
                     </button>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Your API key is stored locally in your browser and is never sent to our servers.
+                    Your API key is stored locally in your browser's localStorage.
                   </p>
                 </div>
               </div>
             )}
           </div>
-          
-          <div className="w-full border rounded-md p-4">
-            <button 
-              className="flex items-center gap-2 w-full text-left"
+
+          {/* Content Settings Section (uses AdvancedContentSettings component) */}
+          <div className="w-full border rounded-md bg-gray-50">
+            <button
+              className="flex items-center gap-2 w-full text-left p-3 font-medium text-gray-700 hover:bg-gray-100 rounded-t-md"
               onClick={() => setShowContentSettings(!showContentSettings)}
+              aria-expanded={showContentSettings}
             >
-              <Sliders className="h-4 w-4" />
-              <span>Content Settings</span>
-              <span className="ml-auto">{showContentSettings ? '▲' : '▼'}</span>
+              <Sliders className="h-5 w-5" />
+              <span>Advanced Content Settings</span>
+              <span className="ml-auto text-lg">{showContentSettings ? '−' : '+'}</span>
             </button>
-            
             {showContentSettings && (
-              <div className="mt-3">
-                <AdvancedContentSettings 
-                  data={data} 
-                  updateData={updateData} 
+              <div className="p-4 border-t">
+                <AdvancedContentSettings
+                  data={data}
+                  updateData={updateData}
                 />
               </div>
             )}
           </div>
-          
-          {data.isRecipe ? (
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="recipe-name">
-                Recipe Name *
-              </label>
-              <input
-                id="recipe-name"
-                type="text"
-                value={data.recipeName}
-                onChange={(e) => updateData({ recipeName: e.target.value })}
-                placeholder="Enter the name of your recipe"
-                className="w-full p-2 border rounded-md"
+        </div>
+
+        {/* Recipe Name Input (conditional) */}
+        {data.isRecipe && (
+          <div className="pt-2">
+            <label className="block text-sm font-medium mb-1 text-gray-700" htmlFor="recipe-name">
+              Recipe Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="recipe-name"
+              type="text"
+              value={data.recipeName || ''} // Ensure value is controlled
+              onChange={(e) => updateData({ recipeName: e.target.value })}
+              placeholder="Enter the name of your delicious recipe"
+              className="w-full p-2 border border-gray-300 rounded-md text-sm"
+              required={data.isRecipe}
+            />
+          </div>
+        )}
+
+        {/* Content Display/Editing Area */}
+        <div className="mt-6">
+          {isEditing && contentToDisplay ? (
+            // Editing Mode: Textarea
+             <div>
+                <label htmlFor="content-editor" className="block text-sm font-medium mb-1 text-gray-700">Edit Content:</label>
+                <textarea
+                    id="content-editor"
+                    value={contentToDisplay}
+                    onChange={handleContentChange}
+                    className="w-full min-h-[400px] p-3 border border-gray-300 rounded-md font-mono text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Edit your generated content here..."
+                    aria-label="Content Editor"
+                ></textarea>
+             </div>
+          ) : contentToDisplay ? (
+            // Preview Mode: Rendered HTML
+            <div className="border rounded-lg p-4 md:p-6 bg-gray-50 overflow-auto max-h-[600px] shadow-inner">
+               <label className="block text-sm font-medium mb-2 text-gray-700">Generated Content Preview:</label>
+              <div
+                className="prose prose-sm sm:prose lg:prose-lg max-w-none" // Using Tailwind Typography
+                dangerouslySetInnerHTML={{ __html: contentToDisplay }} // Be cautious with dangerouslySetInnerHTML
               />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="content-length">
-                  Content Length (words)
-                </label>
-                <input
-                  id="content-length"
-                  type="number"
-                  value={data.contentLength || 1200}
-                  onChange={(e) => updateData({ contentLength: Number(e.target.value) })}
-                  placeholder="1200"
-                  className="w-full p-2 border rounded-md"
-                  min={500}
-                  max={5000}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1" htmlFor="target-audience">
-                  Target Audience
-                </label>
-                <input
-                  id="target-audience"
-                  type="text"
-                  value={data.targetAudience || ''}
-                  onChange={(e) => updateData({ targetAudience: e.target.value })}
-                  placeholder="e.g., beginners, professionals, parents"
-                  className="w-full p-2 border rounded-md"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {!contentToDisplay || isEditing ? (
-          <div className="space-y-4">
-            {isEditing && contentToDisplay ? (
-              <textarea
-                value={contentToDisplay}
-                onChange={handleContentChange}
-                className="w-full min-h-[500px] p-2 border rounded-md font-mono text-sm"
-                placeholder="Edit your content here..."
-              ></textarea>
-            ) : (
-              <button 
-                onClick={handleGenerateContent} 
-                disabled={isLoading || (data.isRecipe ? !data.recipeName : false)} // Removed outline check
-                className={`w-full p-3 rounded-md ${
-                  isLoading || (data.isRecipe ? !data.recipeName : false) 
-                    ? (data.isRecipe ? 'bg-green-300' : 'bg-indigo-300') 
+            // Initial State: Generate Button
+            <div className="text-center py-6">
+              <p className="text-gray-500 mb-4">
+                {data.isRecipe ? 'Enter a recipe name and click below to generate the recipe content.' : 'Adjust settings if needed and click below to generate the blog post content.'}
+              </p>
+               <button
+                onClick={handleGenerateContent}
+                disabled={isLoading || (data.isRecipe ? !data.recipeName?.trim() : !data.selectedTitle?.trim()) || !apiKey.trim() || !currentModel} // Also disable if no API key or model
+                className={`w-full md:w-auto inline-flex items-center justify-center px-6 py-3 rounded-md font-semibold text-white transition-colors ${
+                  isLoading || (data.isRecipe ? !data.recipeName?.trim() : !data.selectedTitle?.trim()) || !apiKey.trim() || !currentModel
+                    ? (data.isRecipe ? 'bg-green-300 cursor-not-allowed' : 'bg-indigo-300 cursor-not-allowed')
                     : (data.isRecipe ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700')
-                } text-white flex items-center justify-center`}
+                } shadow-sm`}
+                aria-live="polite" // Announce loading state changes
               >
                 {isLoading ? (
                   <>
@@ -613,44 +666,57 @@ export const ContentStep: React.FC<StepProps> = ({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>Generating Content...</span>
+                    <span>Generating...</span>
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
+                    <RefreshCw className="mr-2 h-5 w-5" />
                     <span>
                       {data.isRecipe ? 'Generate Recipe Content' : 'Generate Blog Content'}
                     </span>
                   </>
                 )}
               </button>
-            )}
-          </div>
-        ) : (
-          <div className="border rounded-lg p-6 bg-gray-50 overflow-auto max-h-[600px]">
-            <div className="prose prose-sm sm:prose max-w-none" dangerouslySetInnerHTML={{ __html: contentToDisplay }} />
-          </div>
-        )}
+               {/* Show reason for disabled button */}
+               { !isLoading && ((data.isRecipe ? !data.recipeName?.trim() : !data.selectedTitle?.trim()) || !apiKey.trim() || !currentModel) && (
+                    <p className="text-xs text-red-500 mt-2">
+                        {data.isRecipe && !data.recipeName?.trim() && "Recipe name is required. "}
+                        {!data.isRecipe && !data.selectedTitle?.trim() && "Meta title is required. "}
+                        {!apiKey.trim() && "API key is required. "}
+                        {!currentModel && "Model selection is required. "}
+                    </p>
+               )}
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex justify-between">
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mt-8">
         <button
           onClick={onPrevStep}
-          className="px-3 py-2 border rounded-md bg-gray-100 hover:bg-gray-200 flex items-center"
+          className="px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium flex items-center transition-colors"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Content Settings
+          Back to Meta Description {/* Assuming previous step is Meta Description */}
         </button>
-        
-        {/* Fixed: Always use the Next Step button for navigating to either the Full Article or Schema step */}
+
+        {/* --- MODIFIED PART --- */}
+        {/* Update the text based on isRecipe, removing the Schema step reference */}
         <button
           onClick={onNextStep}
-          disabled={!canProceed}
-          className={`p-3 rounded-md ${!canProceed ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'} text-white flex items-center`}
+          disabled={!canProceed || isLoading} // Disable if no content or loading
+          className={`px-4 py-2 rounded-md text-sm font-medium flex items-center text-white transition-colors shadow-sm ${
+            !canProceed || isLoading
+              ? 'bg-indigo-300 cursor-not-allowed'
+              : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
         >
-          {data.isRecipe ? 'Next Step: Recipe Schema' : 'Next Step: Full Article'}
+          {/* Change text based on whether it's a recipe or blog post */}
+          {data.isRecipe ? 'Next Step: Recipe Details' : 'Next Step: Full Article'}
           <ArrowRight className="ml-2 h-4 w-4" />
         </button>
+        {/* --- END OF MODIFIED PART --- */}
       </div>
     </div>
   );
