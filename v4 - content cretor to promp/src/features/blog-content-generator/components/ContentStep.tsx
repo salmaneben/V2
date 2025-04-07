@@ -80,8 +80,10 @@ export const ContentStep: React.FC<StepProps> = ({
       { id: 'llama-3.1-sonar-large-256k-online', name: 'Llama 3.1 Sonar (Large)', description: 'Most capable' }
     ],
     deepseek: [
-      { id: 'deepseek-chat', name: 'DeepSeek Chat', description: 'General-purpose' },
-      { id: 'deepseek-coder', name: 'DeepSeek Coder', description: 'Code-focused' }
+      { id: 'deepseek-llm-67b-chat', name: 'DeepSeek LLM 67B Chat', description: 'General-purpose' },
+      { id: 'deepseek-coder-33b-instruct', name: 'DeepSeek Coder 33B', description: 'Code-focused' },
+      { id: 'deepseek-math-7b-instruct', name: 'DeepSeek Math 7B', description: 'Math-focused' },
+      { id: 'deepseek-llm-7b-chat', name: 'DeepSeek LLM 7B Chat', description: 'Lightweight general-purpose' }
     ]
   };
   
@@ -224,6 +226,7 @@ export const ContentStep: React.FC<StepProps> = ({
         
         // Prepare all content settings to pass to the generateContent function
         result = await generateContent({
+          metaTitle: data.selectedTitle,
           focusKeyword: data.focusKeyword,
           outline: data.outline || '', // Keep outline optional for backward compatibility
           contentLength: data.contentLength,
@@ -639,31 +642,15 @@ export const ContentStep: React.FC<StepProps> = ({
           Back to Content Settings
         </button>
         
-        {data.isRecipe ? (
-          <button
-            onClick={onNextStep}
-            disabled={!canProceed}
-            className={`p-3 rounded-md ${!canProceed ? 'bg-purple-300' : 'bg-purple-600 hover:bg-purple-700'} text-white flex items-center`}
-          >
-            Next Step: Recipe Schema
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            onClick={() => {
-              // For blog posts, we're done
-              // You could add a final function call here to save or export
-              // For now, just show a success message
-              setSuccessMessage('Blog content generation complete! You can copy and use it now.');
-              setTimeout(() => setSuccessMessage(null), 5000);
-            }}
-            disabled={!canProceed}
-            className={`p-3 rounded-md ${!canProceed ? 'bg-green-300' : 'bg-green-600 hover:bg-green-700'} text-white flex items-center`}
-          >
-            Complete Content Generation
-            <CheckCircle className="ml-2 h-4 w-4" />
-          </button>
-        )}
+        {/* Fixed: Always use the Next Step button for navigating to either the Full Article or Schema step */}
+        <button
+          onClick={onNextStep}
+          disabled={!canProceed}
+          className={`p-3 rounded-md ${!canProceed ? 'bg-indigo-300' : 'bg-indigo-600 hover:bg-indigo-700'} text-white flex items-center`}
+        >
+          {data.isRecipe ? 'Next Step: Recipe Schema' : 'Next Step: Full Article'}
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </button>
       </div>
     </div>
   );

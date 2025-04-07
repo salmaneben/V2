@@ -1,9 +1,13 @@
 // src/api/providers/deepseek.ts
 import { ApiConfig, ApiResponse, ApiProviderInterface, ApiMessageContent, ContentGenerationOptions } from '../types';
 import { API_ENDPOINTS, DEFAULT_MODELS } from '../config';
+import BaseProvider from './base';
 
-class DeepSeekProvider implements ApiProviderInterface {
+class DeepSeekProvider extends BaseProvider {
   async testConnection(config: ApiConfig): Promise<ApiResponse> {
+    const validationError = this.validateConfig(config);
+    if (validationError) return validationError;
+
     try {
       const response = await fetch(API_ENDPOINTS.DEEPSEEK, {
         method: 'POST',
@@ -22,18 +26,12 @@ class DeepSeekProvider implements ApiProviderInterface {
       });
 
       if (!response.ok) {
-        return {
-          success: false,
-          error: `API returned status ${response.status}: ${response.statusText}`
-        };
+        return this.handleApiError(response);
       }
 
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error connecting to DeepSeek API'
-      };
+      return this.handleError(error, 'DeepSeek connection test');
     }
   }
 
@@ -42,6 +40,9 @@ class DeepSeekProvider implements ApiProviderInterface {
     prompt: string,
     options: ContentGenerationOptions = {}
   ): Promise<ApiResponse> {
+    const validationError = this.validateConfig(config);
+    if (validationError) return validationError;
+
     try {
       const messages = this.formatMessages(options.systemPrompt, prompt);
 
@@ -60,10 +61,7 @@ class DeepSeekProvider implements ApiProviderInterface {
       });
 
       if (!response.ok) {
-        return {
-          success: false,
-          error: `API returned status ${response.status}: ${response.statusText}`
-        };
+        return this.handleApiError(response);
       }
 
       const data = await response.json();
@@ -71,10 +69,7 @@ class DeepSeekProvider implements ApiProviderInterface {
 
       return { success: true, data: { content } };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred during DeepSeek generation'
-      };
+      return this.handleError(error, 'DeepSeek content generation');
     }
   }
 

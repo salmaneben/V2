@@ -2,8 +2,9 @@
 
 import React, { useEffect } from 'react';
 import { Edit3 } from 'lucide-react';
-import { BlogContentGenerator } from '../features/blog-content-generator';
 import { incrementStat } from '../lib/appStats';
+// Import the entire BlogContentGenerator from the features directory
+import { BlogContentGenerator } from '../features/blog-content-generator';
 
 interface BlogContentGeneratorPageProps {
   sidebarState: string;
@@ -49,6 +50,7 @@ const BlogContentGeneratorPage: React.FC<BlogContentGeneratorPageProps> = ({ sid
         </div>
       </div>
       
+      {/* Pass the onSave prop to the BlogContentGenerator component */}
       <BlogContentGenerator onSave={handleSaveContent} />
     </div>
   );

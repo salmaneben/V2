@@ -20,20 +20,28 @@ import {
 // Process API response based on provider
 const processApiResponse = async (response: Response, provider: Provider) => {
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || `Error: ${response.status}`);
+    try {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || `Error: ${response.status}`);
+    } catch (e) {
+      throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+    }
   }
 
-  const data = await response.json();
-  
-  if (provider === 'claude') {
-    return data.content?.[0]?.text || '';
-  } else {
-    return data.choices?.[0]?.message?.content || '';
+  try {
+    const data = await response.json();
+    
+    if (provider === 'claude') {
+      return data.content?.[0]?.text || '';
+    } else {
+      return data.choices?.[0]?.message?.content || '';
+    }
+  } catch (error) {
+    throw new Error('Failed to parse API response');
   }
 };
 
-// Generate Meta Titles
+// Generate Meta Titles - Fixed function signature to accept single object parameter
 export const generateMetaTitles = async (
   params: MetaTitleGeneratorRequest
 ): Promise<MetaTitleGeneratorResponse> => {
@@ -281,7 +289,7 @@ export const generateOutline = async (
   }
 };
 
-// Generate Blog Content Based on Content Settings
+// Generate Blog Content Based on Content Settings - Enhanced for full article generation
 export const generateContent = async (
   params: ContentGeneratorRequest
 ): Promise<ContentGeneratorResponse> => {
@@ -299,11 +307,12 @@ export const generateContent = async (
     // Get content settings from params
     const wordCount = params.wordCount || 'medium';
     const wordCountMap: {[key: string]: number} = {
-      'small': 800,
-      'medium': 1200,
-      'large': 2000
+      'x-small': 600,
+      'small': 1200,
+      'medium': 2400,
+      'large': 3600
     };
-    const targetWordCount = params.contentLength || wordCountMap[wordCount] || 1200;
+    const targetWordCount = params.contentLength || wordCountMap[wordCount] || 2400;
     
     const tone = params.tone || 'Professional';
     const readabilityLevel = params.textReadability || '8th & 9th grade';
@@ -335,27 +344,34 @@ export const generateContent = async (
     // Create structure instructions based on settings
     const structureInstructions = `
     Content Structure:
+    - The article should have a compelling introduction that hooks the reader and introduces the topic
     - ${includeH3 ? 'Use H2 for main sections and H3 for subsections' : 'Use H2 headings for main sections only'}
     - ${includeLists ? 'Include bulleted or numbered lists where appropriate' : 'Avoid using lists'}
     - ${includeTables ? 'Include a comparison table if relevant to the topic' : 'No tables needed'}
     - ${includeKeyTakeaways ? 'Include a "Key Takeaways" section at the end' : 'No key takeaways section needed'}
-    - ${includeConclusion ? 'End with a conclusion paragraph' : 'No conclusion needed'}
-    - ${includeFAQs ? 'Add an FAQ section with at least 3 questions related to the topic' : 'No FAQ section needed'}
+    - ${includeConclusion ? 'End with a conclusion paragraph that summarizes the main points' : 'No conclusion needed'}
+    - ${includeFAQs ? 'Add an FAQ section with at least 3-5 questions related to the topic' : 'No FAQ section needed'}
     `;
     
     // Create formatting instructions based on settings
     const formattingInstructions = `
     Formatting:
+    - Use proper HTML structure with <h2>, <h3>, <p>, <ul>, <ol>, <li>, <table> tags, etc.
     - ${includeBold ? 'Use <strong> HTML tags for important keywords and phrases' : 'Avoid using bold text'}
     - ${includeItalics ? 'Use <em> HTML tags for emphasis where appropriate' : 'Avoid using italics'}
     - ${includeQuotes ? 'Include relevant quotes if applicable using <blockquote> tags' : 'No quotes needed'}
-    - ${outputFormat === 'blogPost' ? 'Format as a rich blog post with proper HTML structure' : 'Format as standard content'}
+    - Use <table> tags for tables with <tr>, <th>, and <td> elements
+    - For lists, use <ul> and <li> tags for unordered lists, <ol> and <li> for ordered lists
+    - Format the article in a way that's easy to read and skim, using appropriate whitespace and structure
     `;
     
     // Create SEO instructions based on settings
     let seoInstructions = `
     SEO Requirements:
-    - Use the focus keyword "${params.focusKeyword}" naturally in the first paragraph, in at least one H2 heading, and 2-3 times throughout the content.
+    - Use the exact title: "${params.metaTitle}" as the H1 heading at the beginning
+    - Use the focus keyword "${params.focusKeyword}" naturally in the first paragraph, in at least one H2 heading, and 3-5 times throughout the content
+    - Include the focus keyword in the first 100 words and near the conclusion
+    - Use synonyms and LSI (Latent Semantic Indexing) keywords related to the main topic
     `;
     
     if (seoKeywords) {
@@ -367,11 +383,11 @@ export const generateContent = async (
     }
     
     if (internalLinkingWebsite) {
-      seoInstructions += `- Include internal linking opportunities: ${internalLinkingWebsite}\n`;
+      seoInstructions += `- Include internal linking opportunities using this format: <a href="#" title="keyword">keyword</a> for these topics: ${internalLinkingWebsite}\n`;
     }
     
     if (externalLinkType) {
-      seoInstructions += `- Include external linking opportunities: ${externalLinkType}\n`;
+      seoInstructions += `- Include external linking opportunities using this format: <a href="#" target="_blank" rel="noopener noreferrer">keyword</a> for these topics: ${externalLinkType}\n`;
     }
     
     // Create FAQ instructions if FAQs are enabled
@@ -381,11 +397,29 @@ export const generateContent = async (
       FAQ Section:
       Include the following questions in your FAQ section:
       ${faqs}
+      
+      Format each FAQ as:
+      <h2>FAQ About ${params.focusKeyword}</h2>
+      <h3>Question 1?</h3>
+      <p>Answer to question 1...</p>
+      <h3>Question 2?</h3>
+      <p>Answer to question 2...</p>
+      
+      Make sure answers are comprehensive, accurate and helpful.
       `;
     } else if (includeFAQs) {
       faqInstructions = `
       FAQ Section:
       Include at least 5 frequently asked questions about ${params.focusKeyword} in your FAQ section.
+      Each question should be something a reader would genuinely want to know about the topic.
+      Format them as proper H3 headings followed by detailed paragraph answers.
+      
+      Format the FAQ section as:
+      <h2>FAQ About ${params.focusKeyword}</h2>
+      <h3>Question 1?</h3>
+      <p>Answer to question 1...</p>
+      <h3>Question 2?</h3>
+      <p>Answer to question 2...</p>
       `;
     }
     
@@ -398,15 +432,32 @@ export const generateContent = async (
       `;
     }
     
+    // Enhanced article quality instructions
+    const articleQualityInstructions = `
+    Article Quality Requirements:
+    - Write in a ${tone} tone that is appropriate for the target audience
+    - Ensure the content is at a ${readabilityLevel} reading level
+    - Provide actionable, practical advice or information that readers can apply
+    - Back up claims with facts, statistics, or examples where appropriate
+    - Use transition words and phrases to maintain flow between paragraphs and sections
+    - Avoid fluff, generic statements, and unnecessary repetition
+    - Include specific examples, case studies, or data points to strengthen arguments
+    - Address potential objections or counterarguments where relevant
+    - Write with a confident, authoritative voice that establishes expertise on the topic
+    - Ensure the article delivers on the promise made in the title
+    `;
+    
     // Combine all instructions into a prompt
     const promptText = `
       You are a professional Copywriter and SEO specialist. Write a comprehensive blog post with the following specifications:
       
-      Topic: ${params.focusKeyword}
+      Title: ${params.metaTitle}
+      Primary Keyword: ${params.focusKeyword}
+      Secondary Keywords: ${params.seoKeywords || "Generate appropriate secondary keywords based on the primary keyword"}
       Target word count: ${targetWordCount} words
       Tone: ${tone}
       Readability level: ${readabilityLevel}
-      Target audience: ${params.targetAudience || 'general readers interested in this topic'}
+      Target audience: ${params.targetAudience || 'General readers interested in this topic'}
       
       ${structureInstructions}
       
@@ -414,13 +465,25 @@ export const generateContent = async (
       
       ${seoInstructions}
       
+      ${articleQualityInstructions}
+      
       ${faqInstructions}
       
       ${userInstructions}
       
-      Generate a complete, well-structured blog post following these instructions. Use proper HTML formatting for headings (h2, h3) and other elements like lists, tables, and emphasis.
+      Create a comprehensive, well-researched article that thoroughly covers the topic and provides genuine value to readers. The article should be formatted with proper HTML tags and structure for a WordPress blog. Use headings, subheadings, paragraphs, lists, and other formatting elements to create a well-organized, easily scannable piece.
       
-      ${params.outline ? `Consider using this outline as a reference: \n${params.outline}` : ''}
+      Be sure to include:
+      1. An engaging introduction that hooks the reader
+      2. Comprehensive main content with clear sections and subheadings
+      3. A logical flow of information that guides readers through the topic
+      4. Practical advice, tips, or actionable information
+      5. A strong conclusion that summarizes key points
+      ${includeFAQs ? '6. A helpful FAQ section addressing common questions' : ''}
+      
+      ${params.outline ? `Consider using this outline as a reference: \n${params.outline}` : 'Create your own logical outline and structure that thoroughly covers the topic.'}
+      
+      Your article should be completely original, highly informative, and valuable to readers interested in this topic. It should be written in a way that positions it as one of the most comprehensive resources on this subject.
     `;
 
     let response;
@@ -451,7 +514,7 @@ export const generateContent = async (
         body: JSON.stringify({
           model,
           messages: [
-            { role: 'system', content: 'You are an expert SEO copywriter and content creator.' },
+            { role: 'system', content: 'You are an expert SEO copywriter and content creator who specializes in creating comprehensive, valuable articles that rank well in search engines and provide genuine value to readers.' },
             { role: 'user', content: promptText }
           ],
           max_tokens: 4000

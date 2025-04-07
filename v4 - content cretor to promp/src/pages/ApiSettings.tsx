@@ -50,7 +50,7 @@ const ApiSettings = ({ sidebarState }) => {
           <div>
             <h3 className="font-medium text-gray-800">About API Settings</h3>
             <p className="text-sm text-gray-600 mt-1">
-              You can choose between Perplexity AI, OpenAI (GPT), Claude, DeepSeek, or your own custom API endpoint.
+              You can choose between Perplexity AI, OpenAI (GPT), Claude, DeepSeek LLM/Coder/Math models, or your own custom API endpoint.
             </p>
           </div>
         </div>

@@ -5,15 +5,15 @@ export const API_ENDPOINTS = {
   PERPLEXITY: 'https://api.perplexity.ai/chat/completions',
   OPENAI: 'https://api.openai.com/v1/chat/completions',
   CLAUDE: 'https://api.anthropic.com/v1/messages',
-  DEEPSEEK: 'https://api.deepseek.ai/v1/chat/completions'
+  DEEPSEEK: 'https://api.deepseek.com/v1/chat/completions'
 };
 
 // Default models for each provider
 export const DEFAULT_MODELS = {
   PERPLEXITY: 'llama-3.1-sonar-small-128k-online',
-  OPENAI: 'gpt-4o',
+  OPENAI: 'gpt-4-turbo',
   CLAUDE: 'claude-3-5-sonnet',
-  DEEPSEEK: 'deepseek-llm-67b-chat'
+  DEEPSEEK: 'deepseek-chat'
 };
 
 // Default request timeout in milliseconds
@@ -43,8 +43,6 @@ export const MODEL_OPTIONS: ApiModelOption[] = [
   { label: 'Claude 3 Haiku', value: 'claude-3-haiku', provider: 'claude' },
   
   // DeepSeek models
-  { label: 'DeepSeek LLM 67B Chat', value: 'deepseek-llm-67b-chat', provider: 'deepseek' },
-  { label: 'DeepSeek Coder 33B', value: 'deepseek-coder-33b-instruct', provider: 'deepseek' },
-  { label: 'DeepSeek Math 7B', value: 'deepseek-math-7b-instruct', provider: 'deepseek' },
-  { label: 'DeepSeek LLM 7B Chat', value: 'deepseek-llm-7b-chat', provider: 'deepseek' },
+  { label: 'DeepSeek Chat', value: 'deepseek-chat', provider: 'deepseek' },
+  { label: 'DeepSeek Reasoner', value: 'deepseek-reasoner', provider: 'deepseek' },
 ];

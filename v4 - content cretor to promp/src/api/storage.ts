@@ -79,6 +79,13 @@ export const setCustomApiSettings = (settings: {
   localStorage.setItem('custom_api_verify', settings.verifySSL.toString());
 };
 
+import { MODEL_OPTIONS } from './config';
+
+// Get available models for a provider
+export const getModelsForProvider = (provider: Provider): ApiModelOption[] => {
+  return MODEL_OPTIONS.filter(model => model.provider === provider);
+};
+
 // Get complete API configuration for a provider
 export const getApiConfig = (provider: Provider): ApiConfig => {
   const config: ApiConfig = {

@@ -1,331 +1,235 @@
 // src/features/blog-content-generator/components/BlogContentGenerator.tsx
 
 import React, { useState, useEffect } from 'react';
-import { StepIndicator } from './StepIndicator';
 import { MetaTitleStep } from './MetaTitleStep';
 import { MetaDescriptionStep } from './MetaDescriptionStep';
 import { ContentSettingsStep } from './ContentSettingsStep';
 import { ContentStep } from './ContentStep';
+import { ArticleGenerationStep } from './ArticleGenerationStep';
 import { SchemaMarkupStep } from './SchemaMarkupStep';
-import { BlogContentGeneratorProps, BlogContentFormData, Provider, ImageSettings, OptInSettings } from '../types';
-import { Alert } from '@/components/ui/alert';
-import ApiSettingsButton from './ApiSettingsButton';
+import { StepIndicator } from './StepIndicator';
 
-export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ onSave }) => {
-  const [currentStep, setCurrentStep] = useState(0);
+interface BlogContentGeneratorProps {
+  initialStep?: number;
+  onSave?: () => void;
+}
+
+export const BlogContentGenerator: React.FC<BlogContentGeneratorProps> = ({ 
+  initialStep = 1,
+  onSave
+}) => {
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [formData, setFormData] = useState<BlogContentFormData>({
-    // Common fields
+  const [data, setData] = useState<any>({
     focusKeyword: '',
     relatedTerm: '',
-    provider: localStorage.getItem('preferred_provider') as Provider || 'openai',
-    
-    // Initialize API settings with empty object, will be populated in useEffect
-    apiSettings: {},
-    
-    // Step 1: Meta Title
     selectedTitle: '',
-    generatedTitles: [],
-    
-    // Step 2: Meta Description
-    selectedDescription: '',
-    generatedDescriptions: [],
-    
-    // Step 3: Content Settings (replacing Outline)
-    outline: '', // Keep this for backward compatibility
-    
-    // Step 4: Content
+    metaDescription: '',
     content: '',
-    contentLength: 1200,
-    targetAudience: '',
-    
-    // Step 5: Recipe Content (optional)
-    isRecipe: false,
-    recipeName: '',
-    recipeContent: '',
-    
-    // Step 6: Recipe Schema (optional)
-    prepTime: 'PT30M',
-    cookTime: 'PT1H',
-    totalTime: 'PT1H30M',
-    recipeType: 'Main Course',
-    cuisine: 'American',
-    keywords: '',
-    recipeYield: '4 servings',
-    calories: '350 calories',
-    ingredients: [],
-    instructions: [],
-    pros: [],
-    cons: [],
+    generatedTitles: [],
+    generatedDescriptions: [],
+    apiSettings: null,
+    contentSettings: {
+      wordCount: 'medium',
+      tone: 'Professional',
+      textReadability: '8th & 9th grade',
+      includeConclusion: true,
+      includeTables: true,
+      includeH3: true,
+      includeLists: true,
+      includeItalics: false,
+      includeQuotes: false,
+      includeBold: true,
+      includeKeyTakeaways: true,
+      includeFAQs: true
+    },
+    seoSettings: {
+      seoKeywords: '',
+      longTailKeywords: '',
+      internalLinkingWebsite: '',
+      externalLinkType: ''
+    },
     schemaMarkup: '',
-    
-    // Initialize enhanced settings
-    imageSettings: {
-      numberOfImagePrompts: 5,
-      imagePromptStyle: 'detailed',
-      imageDistribution: 'balanced',
-      customImagePrompts: ''
-    },
-    
-    optInSettings: {
-      enableOptIn: false,
-      optInText: 'Subscribe to our newsletter for more content like this',
-      optInRequired: false,
-      optInPlacement: 'bottom',
-      optInDesign: 'standard'
-    },
-    
-    // Additional content settings with defaults
-    wordCount: 'medium',
-    language: 'English (US)',
-    country: 'United States',
-    tone: 'Professional',
-    textReadability: '8th & 9th grade',
-    includeConclusion: true,
-    includeTables: true,
-    includeH3: true,
-    includeLists: true,
-    includeItalics: false,
-    includeQuotes: false,
-    includeKeyTakeaways: true,
-    includeFAQs: true,
-    includeBold: true,
-    outputFormat: 'blogPost',
-    
-    // SEO options
-    seoKeywords: '',
-    longTailKeywords: '',
-    internalLinkingWebsite: '',
-    externalLinkType: '',
-    faqs: ''
+    generatedArticle: '' // Add this for storing the full generated article
   });
-  
-  const [error, setError] = useState<string | null>(null);
-  
-  // Initialize API settings from localStorage
-  useEffect(() => {
-    const initializeApiSettings = () => {
-      // Initialize API settings from localStorage or with defaults
-      const apiSettings = {
-        titleApiProvider: localStorage.getItem('preferred_provider_titleApiProvider') as Provider || formData.provider || 'openai',
-        titleApiModel: localStorage.getItem('preferred_model_titleApiModel') || '',
-        
-        descriptionApiProvider: localStorage.getItem('preferred_provider_descriptionApiProvider') as Provider || formData.provider || 'openai',
-        descriptionApiModel: localStorage.getItem('preferred_model_descriptionApiModel') || '',
-        
-        // No longer need outlineApiProvider since we removed that step
-        seoApiProvider: localStorage.getItem('preferred_provider_seoApiProvider') as Provider || formData.provider || 'openai',
-        seoApiModel: localStorage.getItem('preferred_model_seoApiModel') || '',
-        
-        contentApiProvider: localStorage.getItem('preferred_provider_contentApiProvider') as Provider || formData.provider || 'openai',
-        contentApiModel: localStorage.getItem('preferred_model_contentApiModel') || '',
-        
-        recipeApiProvider: localStorage.getItem('preferred_provider_recipeApiProvider') as Provider || formData.provider || 'openai',
-        recipeApiModel: localStorage.getItem('preferred_model_recipeApiModel') || '',
-        
-        schemaApiProvider: localStorage.getItem('preferred_provider_schemaApiProvider') as Provider || formData.provider || 'openai',
-        schemaApiModel: localStorage.getItem('preferred_model_schemaApiModel') || '',
-        
-        // Custom API settings
-        customApiEndpoint: localStorage.getItem('custom_api_endpoint') || '',
-        customApiKey: localStorage.getItem('custom_api_key') || '',
-        customApiModel: localStorage.getItem('custom_api_model') || '',
-        customApiVerify: localStorage.getItem('custom_api_verify') !== 'false'
-      };
-      
-      // Initialize image settings from localStorage
-      let imageSettings: ImageSettings = {
-        numberOfImagePrompts: 5,
-        imagePromptStyle: 'detailed',
-        imageDistribution: 'balanced',
-        customImagePrompts: ''
-      };
-      
-      try {
-        const savedImageSettings = localStorage.getItem('image_settings');
-        if (savedImageSettings) {
-          imageSettings = {...imageSettings, ...JSON.parse(savedImageSettings)};
-        }
-      } catch (e) {
-        console.error('Error loading image settings:', e);
-      }
-      
-      // Initialize opt-in settings from localStorage
-      let optInSettings: OptInSettings = {
-        enableOptIn: false,
-        optInText: 'Subscribe to our newsletter for more content like this',
-        optInRequired: false,
-        optInPlacement: 'bottom',
-        optInDesign: 'standard'
-      };
-      
-      try {
-        const savedOptInSettings = localStorage.getItem('opt_in_settings');
-        if (savedOptInSettings) {
-          optInSettings = {...optInSettings, ...JSON.parse(savedOptInSettings)};
-        }
-      } catch (e) {
-        console.error('Error loading opt-in settings:', e);
-      }
-      
-      updateFormData({ 
-        apiSettings,
-        imageSettings,
-        optInSettings
-      });
-    };
-    
-    initializeApiSettings();
-  }, []);
-  
-  // Save preferred provider to localStorage
-  useEffect(() => {
-    if (formData.provider) {
-      localStorage.setItem('preferred_provider', formData.provider);
-    }
-  }, [formData.provider]);
 
-  // Update form data
-  const updateFormData = (newData: Partial<BlogContentFormData>) => {
-    setFormData(prev => {
-      const updated = { ...prev, ...newData };
+  // Update completed steps based on data
+  useEffect(() => {
+    const newCompletedSteps = [];
+    
+    // Check step 1 - Meta Title
+    if (data.selectedTitle) {
+      newCompletedSteps.push(1);
+    }
+    
+    // Check step 2 - Meta Description
+    if (data.metaDescription) {
+      newCompletedSteps.push(2);
+    }
+    
+    // Step 3 - Content Settings is always considered completed once visited
+    if (completedSteps.includes(3)) {
+      newCompletedSteps.push(3);
+    }
+    
+    // Check step 4 - Content
+    if (data.content) {
+      newCompletedSteps.push(4);
+    }
+    
+    // Check step 5 - Full Article
+    if (data.generatedArticle) {
+      newCompletedSteps.push(5);
+    }
+    
+    // Check step 6 - Schema Markup
+    if (data.schemaMarkup) {
+      newCompletedSteps.push(6);
+    }
+    
+    // Only update if the array has changed
+    if (JSON.stringify(newCompletedSteps) !== JSON.stringify(completedSteps)) {
+      setCompletedSteps(newCompletedSteps);
+    }
+  }, [data]);
+
+  // Trigger onSave when content or schema is generated
+  useEffect(() => {
+    // Call onSave only when generatedArticle is first set
+    if (data.generatedArticle && onSave && !completedSteps.includes(5)) {
+      // Call onSave when content is generated
+      onSave();
+      // Also dispatch a custom event for tracking
+      document.dispatchEvent(new CustomEvent('content-saved'));
+    }
+  }, [data.generatedArticle, completedSteps, onSave]);
+
+  // Update data and local storage for persistence
+  const updateData = (newData: Partial<typeof data>) => {
+    // Update state
+    setData(prevData => {
+      const updatedData = {
+        ...prevData,
+        ...newData
+      };
       
-      // When updating image settings, save to localStorage
-      if (newData.imageSettings) {
-        localStorage.setItem('image_settings', JSON.stringify({
-          ...prev.imageSettings,
-          ...newData.imageSettings
-        }));
+      // Persist to localStorage
+      try {
+        localStorage.setItem('blogContentGeneratorData', JSON.stringify(updatedData));
+      } catch (e) {
+        console.error('Failed to save to localStorage:', e);
       }
       
-      // When updating opt-in settings, save to localStorage
-      if (newData.optInSettings) {
-        localStorage.setItem('opt_in_settings', JSON.stringify({
-          ...prev.optInSettings,
-          ...newData.optInSettings
-        }));
-      }
-      
-      return updated;
+      return updatedData;
     });
   };
 
-  // Navigate to next step - FIXED SIMPLIFIED VERSION
-  const handleNextStep = () => {
+  // Load saved data from localStorage on initial mount
+  useEffect(() => {
     try {
-      // Mark current step as completed
-      if (!completedSteps.includes(currentStep)) {
-        setCompletedSteps(prev => [...prev, currentStep]);
+      const savedData = localStorage.getItem('blogContentGeneratorData');
+      if (savedData) {
+        setData(JSON.parse(savedData));
       }
-      
-      // Move to next step
-      setCurrentStep(prev => prev + 1);
-      
-      // If all steps completed, call onSave callback
-      const totalSteps = formData.isRecipe ? 4 : 3;
-      if (currentStep + 1 >= totalSteps && onSave) {
-        onSave(formData);
-      }
-    } catch (error) {
-      console.error("Error in handleNextStep:", error);
-      setError("Navigation error. Please try again.");
+    } catch (e) {
+      console.error('Failed to load from localStorage:', e);
     }
+  }, []);
+
+  const handleNextStep = () => {
+    // Add current step to completed steps if not already there
+    if (!completedSteps.includes(currentStep)) {
+      setCompletedSteps([...completedSteps, currentStep]);
+    }
+    setCurrentStep(prev => prev + 1);
   };
 
-  // Navigate to previous step
   const handlePrevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    setCurrentStep(prev => prev - 1);
   };
 
-  // Jump to a specific step (only if completed or current)
   const handleStepClick = (step: number) => {
-    if (completedSteps.includes(step) || step <= currentStep) {
+    // Only allow clicking on completed steps or the next available step
+    if (completedSteps.includes(step) || step === currentStep || step === currentStep + 1) {
       setCurrentStep(step);
     }
   };
 
-  // Get total number of steps based on whether it's a recipe or not
-  const getTotalSteps = () => formData.isRecipe ? 4 : 3; // Reduced by 1 due to Outline removal
+  // Define steps titles
+  const steps = [
+    "Meta Title",
+    "Meta Description",
+    "Content Settings",
+    "Content",
+    "Full Article",
+    "Schema Markup"
+  ];
 
-  // Render the current step
-  const renderCurrentStep = () => {
+  // Render the appropriate step component based on currentStep
+  const renderStep = () => {
     switch (currentStep) {
-      case 0:
-        return (
-          <MetaTitleStep 
-            data={formData} 
-            updateData={updateFormData} 
-            onNextStep={handleNextStep} 
-          />
-        );
       case 1:
-        return (
-          <MetaDescriptionStep 
-            data={formData} 
-            updateData={updateFormData} 
-            onNextStep={handleNextStep} 
-            onPrevStep={handlePrevStep}
-          />
-        );
+        return <MetaTitleStep 
+          data={data} 
+          updateData={updateData} 
+          onNextStep={handleNextStep} 
+        />;
       case 2:
-        return (
-          <ContentSettingsStep // Using ContentSettingsStep instead of OutlineStep
-            data={formData} 
-            updateData={updateFormData} 
-            onNextStep={handleNextStep} 
-            onPrevStep={handlePrevStep}
-          />
-        );
+        return <MetaDescriptionStep 
+          data={data} 
+          updateData={updateData} 
+          onNextStep={handleNextStep} 
+          onPrevStep={handlePrevStep}
+        />;
       case 3:
-        return (
-          <ContentStep 
-            data={formData} 
-            updateData={updateFormData} 
-            onNextStep={handleNextStep} 
-            onPrevStep={handlePrevStep}
-          />
-        );
+        return <ContentSettingsStep 
+          data={data} 
+          updateData={updateData} 
+          onNextStep={handleNextStep} 
+          onPrevStep={handlePrevStep}
+        />;
       case 4:
-        if (formData.isRecipe) {
-          return (
-            <SchemaMarkupStep 
-              data={formData} 
-              updateData={updateFormData} 
-              onNextStep={handleNextStep} 
-              onPrevStep={handlePrevStep}
-            />
-          );
-        }
-        return null;
+        return <ContentStep 
+          data={data} 
+          updateData={updateData} 
+          onNextStep={handleNextStep} 
+          onPrevStep={handlePrevStep}
+        />;
+      case 5:
+        return <ArticleGenerationStep 
+          data={data} 
+          updateData={updateData} 
+          onNextStep={handleNextStep} 
+          onPrevStep={handlePrevStep}
+        />;
+      case 6:
+        return <SchemaMarkupStep 
+          data={data} 
+          updateData={updateData} 
+          onPrevStep={handlePrevStep}
+        />;
       default:
-        return <div>Unknown step</div>;
+        return <MetaTitleStep 
+          data={data} 
+          updateData={updateData} 
+          onNextStep={handleNextStep} 
+        />;
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Blog Content Generator</h2>
-        <ApiSettingsButton />
-      </div>
-      
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          {error}
-        </Alert>
-      )}
-      
+    <div className="w-full max-w-5xl mx-auto px-4 py-8">
+      {/* Pass completedSteps to StepIndicator */}
       <StepIndicator 
-        currentStep={currentStep} 
-        totalSteps={getTotalSteps()} 
-        isRecipe={formData.isRecipe}
+        steps={steps}
+        currentStep={currentStep}
         onStepClick={handleStepClick}
         completedSteps={completedSteps}
       />
       
-      {renderCurrentStep()}
+      <div className="mt-8">
+        {renderStep()}
+      </div>
     </div>
   );
 };

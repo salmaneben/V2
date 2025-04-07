@@ -1,85 +1,91 @@
 // src/features/blog-content-generator/components/StepIndicator.tsx
 
 import React from 'react';
-import { 
-  Type, 
-  FileText, 
-  Sliders, // Changed from ListOrdered to Sliders
-  Edit, 
-  Utensils, 
-  Code,
-  CheckCircle2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { CheckCircle } from 'lucide-react';
 
 interface StepIndicatorProps {
+  steps: string[];
   currentStep: number;
-  totalSteps: number;
-  isRecipe: boolean;
   onStepClick?: (step: number) => void;
-  completedSteps: number[];
+  completedSteps?: number[]; // Make this optional with a default empty array
 }
 
-export const StepIndicator: React.FC<StepIndicatorProps> = ({ 
-  currentStep, 
-  totalSteps, 
-  isRecipe,
+export const StepIndicator: React.FC<StepIndicatorProps> = ({
+  steps,
+  currentStep,
   onStepClick,
-  completedSteps 
+  completedSteps = [] // Provide a default empty array
 }) => {
-  // Define step icons and titles - Updated for Content Settings
-  const steps = [
-    { title: 'Meta Title', icon: Type, color: 'bg-amber-100 text-amber-600' },
-    { title: 'Meta Description', icon: FileText, color: 'bg-orange-100 text-orange-600' },
-    { title: 'Content Settings', icon: Sliders, color: 'bg-blue-100 text-blue-600' }, // Changed from Outline
-    { title: isRecipe ? 'Recipe Content' : 'Blog Content', icon: isRecipe ? Utensils : Edit, color: isRecipe ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600' },
-    ...(isRecipe ? [{ title: 'Schema Markup', icon: Code, color: 'bg-purple-100 text-purple-600' }] : [])
-  ];
+  // Function to determine if a step is clickable
+  const isClickable = (stepNumber: number) => {
+    // Only steps that are completed or the current step + 1 are clickable
+    // This prevents jumping ahead more than one step
+    return completedSteps.includes(stepNumber) || stepNumber === currentStep || stepNumber === currentStep - 1 || stepNumber === currentStep + 1;
+  };
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-      {steps.slice(0, totalSteps).map((step, index) => {
-        const StepIcon = step.icon;
-        const isActive = currentStep === index;
-        const isCompleted = completedSteps.includes(index);
-        const isClickable = isCompleted || index < currentStep;
-        
-        return (
-          <div 
-            key={index}
-            className={cn(
-              "flex items-center gap-2 py-2 px-3 rounded-md flex-1 justify-center",
-              isClickable ? "cursor-pointer" : "cursor-default",
-              isActive ? "bg-gray-100 border border-gray-300" : "",
-              isCompleted ? "text-gray-700" : "text-gray-500"
-            )}
-            onClick={() => isClickable && onStepClick && onStepClick(index)}
-          >
-            <div className={cn(
-              "p-2 rounded-full",
-              isActive ? step.color : (isCompleted ? "bg-green-100" : "bg-gray-100")
-            )}>
-              {isCompleted ? (
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-              ) : (
-                <StepIcon className={cn(
-                  "h-5 w-5",
-                  isActive ? step.color.split(' ')[1] : "text-gray-500"
-                )} />
+    <div className="w-full">
+      <div className="flex items-center justify-between">
+        {steps.map((step, index) => {
+          const stepNumber = index + 1;
+          const isActive = currentStep === stepNumber;
+          const isCompleted = completedSteps.includes(stepNumber);
+          const isClickableStep = onStepClick && isClickable(stepNumber);
+          
+          return (
+            <div 
+              key={stepNumber}
+              className="flex flex-col items-center relative"
+              style={{ width: `${100 / steps.length}%` }}
+            >
+              {/* Step Line (except for the last step) */}
+              {index < steps.length - 1 && (
+                <div 
+                  className={`absolute top-4 w-full h-0.5 ${
+                    isCompleted ? 'bg-indigo-500' : 'bg-gray-200'
+                  }`}
+                  style={{ 
+                    right: '-50%',
+                    width: '100%',
+                    zIndex: 0
+                  }}
+                />
               )}
+              
+              {/* Step Circle */}
+              <div 
+                onClick={() => isClickableStep && onStepClick(stepNumber)}
+                className={`
+                  relative z-10 flex items-center justify-center w-8 h-8 rounded-full 
+                  ${isActive ? 'bg-indigo-600 text-white' : ''}
+                  ${isCompleted ? 'bg-indigo-500 text-white' : ''}
+                  ${!isActive && !isCompleted ? 'bg-gray-200' : ''}
+                  ${isClickableStep ? 'cursor-pointer hover:bg-indigo-700' : 'cursor-default'}
+                  mb-2
+                `}
+              >
+                {isCompleted ? (
+                  <CheckCircle className="h-5 w-5" />
+                ) : (
+                  <span className="text-sm font-medium">{stepNumber}</span>
+                )}
+              </div>
+              
+              {/* Step Label */}
+              <span 
+                className={`
+                  text-xs text-center
+                  ${isActive ? 'font-semibold text-indigo-600' : ''}
+                  ${isCompleted ? 'font-medium text-indigo-500' : ''}
+                  ${!isActive && !isCompleted ? 'text-gray-500' : ''}
+                `}
+              >
+                {step}
+              </span>
             </div>
-            <span className={cn(
-              "text-sm font-medium whitespace-nowrap sm:inline hidden",
-              isActive ? "text-gray-800" : (isCompleted ? "text-gray-700" : "text-gray-500")
-            )}>
-              {step.title}
-            </span>
-            <span className="inline sm:hidden text-sm font-medium">
-              {index + 1}
-            </span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

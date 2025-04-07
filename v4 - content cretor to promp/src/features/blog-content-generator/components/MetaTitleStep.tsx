@@ -4,14 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Copy, CheckCircle, RefreshCw, ArrowRight, Settings, AlertCircle, Server, Key } from 'lucide-react';
 import { StepProps, Provider } from '../types';
 import { 
-  generateMetaTitles, 
-  getApiKey, 
-  setApiKey, 
-  getPreferredProvider,
-  getModelForProvider,
-  getModelsForProvider,
-  ApiModelOption
-} from '@/api';
+  generateMetaTitles 
+} from '../utils/blogContentGenerator';
+import { getPreferredProvider, getModelForProvider, getApiKey, getModelsForProvider, setApiKey } from '@/api/storage';
+import { ApiModelOption } from '@/api/types';
 
 export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextStep }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -143,31 +139,20 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
     try {
       console.log(`Generating titles with provider: ${provider}`);
       
-      // Use our new API module's generateMetaTitles function
-      const result = await generateMetaTitles(
-        data.focusKeyword,
-        data.relatedTerm,
-        {
-          provider,
-          numTitles: 10
-        }
-      );
+      // Fixed: Pass a single object parameter to match the function signature
+      const result = await generateMetaTitles({
+        focusKeyword: data.focusKeyword,
+        relatedTerm: data.relatedTerm,
+        provider: provider as Provider,
+        numTitles: 10
+      });
 
-      if (!result.success || result.error) {
+      if (result.error) {
         setError(result.error || 'Failed to generate titles. Please try again.');
-      } else if (result.data && result.data.content) {
-        // Parse titles from the response content
-        // Typically the AI returns a numbered list, so we need to parse it
-        const content = result.data.content;
-        const lines = content.split('\n').filter(line => line.trim() !== '');
-        const titles = lines.map(line => {
-          // Strip numbers, periods, and any extra spaces from the beginning
-          return line.replace(/^\d+\.?\s*/, '').trim();
-        }).filter(title => title.length > 0);
-        
+      } else if (result.titles && result.titles.length > 0) {
         updateData({ 
-          generatedTitles: titles,
-          selectedTitle: titles[0] || ''
+          generatedTitles: result.titles,
+          selectedTitle: result.titles[0] || ''
         });
         
         setSuccessMessage('Titles generated successfully!');
