@@ -1,45 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import APISettings, { APISettingsState } from '@/features/settings/components/APISettings';
+import ApiSettingsPanel from '@/components/ApiSettingsPanel';
 import { Info, CheckCircle } from 'lucide-react';
 
 const ApiSettings = ({ sidebarState }) => {
-  const [settings, setSettings] = useState(null);
   const [updateMessage, setUpdateMessage] = useState({ show: false, type: '', text: '' });
 
-  useEffect(() => {
-    // Load settings from localStorage on component mount
-    const savedPerplexityApiKey = localStorage.getItem('perplexity_api_key');
-    const savedOpenaiApiKey = localStorage.getItem('openai_api_key');
-    const savedClaudeApiKey = localStorage.getItem('claude_api_key');
-    const savedDeepseekApiKey = localStorage.getItem('deepseek_api_key');
-    const savedCustomApiEndpoint = localStorage.getItem('custom_api_endpoint');
-    const savedCustomApiKey = localStorage.getItem('custom_api_key');
-    const savedCustomApiModel = localStorage.getItem('custom_api_model');
-    const savedCustomApiVerify = localStorage.getItem('custom_api_verify');
-    const savedPreferredProvider = localStorage.getItem('preferred_provider');
-    
-    setSettings({
-      perplexityApiKey: savedPerplexityApiKey || '',
-      openaiApiKey: savedOpenaiApiKey || '',
-      openaiModel: localStorage.getItem('openai_model') || 'gpt-4o',
-      claudeApiKey: savedClaudeApiKey || '',
-      claudeModel: localStorage.getItem('claude_model') || 'claude-3-5-sonnet',
-      deepseekApiKey: savedDeepseekApiKey || '',
-      deepseekModel: localStorage.getItem('deepseek_model') || 'deepseek-chat',
-      // Removed fluxaiApiKey and fluxaiModel
-      customApiEndpoint: savedCustomApiEndpoint || '',
-      customApiKey: savedCustomApiKey || '',
-      customApiModel: savedCustomApiModel || '',
-      customApiVerify: savedCustomApiVerify !== 'false',
-      preferredProvider: savedPreferredProvider || 'perplexity'
-    });
-  }, []);
-
-  const handleApiSettingsChange = (updatedSettings) => {
-    setSettings(updatedSettings);
-    
-    // Show success message
+  const showSuccessMessage = () => {
     setUpdateMessage({
       show: true,
       type: 'success',
@@ -84,27 +51,13 @@ const ApiSettings = ({ sidebarState }) => {
             <h3 className="font-medium text-gray-800">About API Settings</h3>
             <p className="text-sm text-gray-600 mt-1">
               You can choose between Perplexity AI, OpenAI (GPT), Claude, DeepSeek, or your own custom API endpoint.
-              {/* Removed Flux AI from description */}
             </p>
           </div>
         </div>
       </Card>
       
       <div className="space-y-8">
-        {settings && (
-          <APISettings 
-            onSettingsChange={handleApiSettingsChange}
-            // Make sure these props match what APISettings component expects
-            settings={settings}
-            providerOptions={[
-              'perplexity',
-              'openai', 
-              'claude',
-              'deepseek',
-              'custom'
-            ]}
-          />
-        )}
+        <ApiSettingsPanel />
       </div>
     </div>
   );

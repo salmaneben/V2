@@ -1,8 +1,14 @@
-import { ApiConfig, ApiResponse, ApiProviderInterface, ApiMessageContent, ContentGenerationOptions } from '../types';
+// src/api/providers/perplexity.ts
+import { ApiConfig, ApiResponse, ContentGenerationOptions } from '../types';
 import { API_ENDPOINTS, DEFAULT_MODELS } from '../config';
+import BaseProvider from './base';
 
-class PerplexityProvider implements ApiProviderInterface {
+class PerplexityProvider extends BaseProvider {
   async testConnection(config: ApiConfig): Promise<ApiResponse> {
+    // Validate config
+    const validationError = this.validateConfig(config);
+    if (validationError) return validationError;
+    
     try {
       const response = await fetch(API_ENDPOINTS.PERPLEXITY, {
         method: 'POST',
@@ -21,18 +27,12 @@ class PerplexityProvider implements ApiProviderInterface {
       });
 
       if (!response.ok) {
-        return {
-          success: false,
-          error: `API returned status ${response.status}: ${response.statusText}`
-        };
+        return this.handleApiError(response);
       }
 
       return { success: true };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error connecting to Perplexity API'
-      };
+      return this.handleError(error, 'connecting to Perplexity API');
     }
   }
 
@@ -41,6 +41,10 @@ class PerplexityProvider implements ApiProviderInterface {
     prompt: string,
     options: ContentGenerationOptions = {}
   ): Promise<ApiResponse> {
+    // Validate config
+    const validationError = this.validateConfig(config);
+    if (validationError) return validationError;
+    
     try {
       const messages = this.formatMessages(options.systemPrompt, prompt);
 
@@ -59,10 +63,7 @@ class PerplexityProvider implements ApiProviderInterface {
       });
 
       if (!response.ok) {
-        return {
-          success: false,
-          error: `API returned status ${response.status}: ${response.statusText}`
-        };
+        return this.handleApiError(response);
       }
 
       const data = await response.json();
@@ -70,23 +71,8 @@ class PerplexityProvider implements ApiProviderInterface {
 
       return { success: true, data: { content } };
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred during Perplexity generation'
-      };
+      return this.handleError(error, 'generating content with Perplexity');
     }
-  }
-
-  formatMessages(systemPrompt: string | undefined, userPrompt: string): ApiMessageContent[] {
-    const messages: ApiMessageContent[] = [];
-    
-    if (systemPrompt) {
-      messages.push({ role: 'system', content: systemPrompt });
-    }
-    
-    messages.push({ role: 'user', content: userPrompt });
-    
-    return messages;
   }
 
   parseResponse(data: any): string {

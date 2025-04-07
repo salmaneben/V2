@@ -2,8 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { Copy, CheckCircle, RefreshCw, ArrowRight, Settings, AlertCircle, Server, Key } from 'lucide-react';
-import { generateMetaTitles } from '../utils/blogContentGenerator';
 import { StepProps, Provider } from '../types';
+import { 
+  generateMetaTitles, 
+  getApiKey, 
+  setApiKey, 
+  getPreferredProvider,
+  getModelForProvider,
+  getModelsForProvider,
+  ApiModelOption
+} from '@/api';
 
 export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextStep }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,14 +20,14 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showApiSettings, setShowApiSettings] = useState(true);
   const [apiKeyWarning, setApiKeyWarning] = useState<string | null>(null);
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKeyState] = useState('');
   
   // Initialize API settings if they don't exist
   useEffect(() => {
     if (!data.apiSettings) {
-      // Default to OpenAI
-      const titleApiProvider = 'openai';
-      const titleApiModel = 'gpt-4o-mini';
+      // Use the preferred provider from our API module
+      const titleApiProvider = getPreferredProvider();
+      const titleApiModel = getModelForProvider(titleApiProvider);
       
       updateData({
         apiSettings: {
@@ -29,15 +37,15 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
       });
     }
     
-    // Load API key from localStorage
-    const provider = data.apiSettings?.titleApiProvider || 'openai';
-    const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
-    setApiKey(savedKey);
+    // Load API key from our API module
+    const provider = data.apiSettings?.titleApiProvider || getPreferredProvider();
+    const savedKey = getApiKey(provider);
+    setApiKeyState(savedKey);
     verifyApiKey(provider);
   }, []);
   
   const verifyApiKey = (provider: Provider) => {
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
+    const key = getApiKey(provider);
     if (!key) {
       setApiKeyWarning(`No API key found for ${provider}. Please enter your API key below.`);
     } else {
@@ -45,32 +53,34 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
     }
   };
   
-  // Model presets for each provider
-  const modelPresets = {
-    openai: [
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast & affordable' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Balanced' },
-      { id: 'gpt-4o', name: 'GPT-4o', description: 'Most capable' }
-    ],
-    claude: [
-      { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fast & affordable' },
-      { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanced' },
-      { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet', description: 'Most capable' }
-    ],
-    perplexity: [
-      { id: 'llama-3.1-sonar-small-128k-online', name: 'Llama 3.1 Sonar (Small)', description: 'Fast & affordable' },
-      { id: 'sonar-medium-online', name: 'Sonar Medium', description: 'Balanced' },
-      { id: 'llama-3.1-sonar-large-256k-online', name: 'Llama 3.1 Sonar (Large)', description: 'Most capable' }
-    ],
-    deepseek: [
-      { id: 'deepseek-chat', name: 'DeepSeek Chat', description: 'General-purpose' },
-      { id: 'deepseek-coder', name: 'DeepSeek Coder', description: 'Code-focused' }
-    ]
+  // Create model presets using the getModelsForProvider function
+  const getModelPresetsForProvider = (provider: Provider) => {
+    const models = getModelsForProvider(provider);
+    
+    // Map the models to a more friendly format for our UI
+    const getDescription = (model: ApiModelOption) => {
+      // Base description on model name patterns
+      if (model.value.includes('mini') || model.value.includes('haiku') || model.value.includes('small')) {
+        return 'Fast & affordable';
+      } else if (model.value.includes('large') || model.value.includes('opus')) {
+        return 'Most capable';
+      } else {
+        return 'Balanced';
+      }
+    };
+    
+    return models.map(model => ({
+      id: model.value,
+      name: model.label,
+      description: getDescription(model)
+    }));
   };
   
   const handleProviderChange = (provider: Provider) => {
-    // Set default model for the new provider
-    const defaultModel = modelPresets[provider]?.[0]?.id || '';
+    // Get models for this provider
+    const models = getModelPresetsForProvider(provider);
+    // Set default model for the new provider (first one in the list)
+    const defaultModel = models[0]?.id || '';
     
     updateData({
       apiSettings: {
@@ -81,8 +91,8 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
     });
     
     // Load API key for the new provider
-    const savedKey = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key') || '';
-    setApiKey(savedKey);
+    const savedKey = getApiKey(provider);
+    setApiKeyState(savedKey);
     verifyApiKey(provider);
   };
   
@@ -96,13 +106,10 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
   };
   
   const handleSaveApiKey = () => {
-    const provider = data.apiSettings?.titleApiProvider || 'openai';
+    const provider = data.apiSettings?.titleApiProvider || getPreferredProvider();
     
-    // Save to provider-specific key
-    localStorage.setItem(`${provider}_api_key`, apiKey);
-    
-    // Also save as global key for backward compatibility
-    localStorage.setItem('api_key', apiKey);
+    // Use our API module to save the key
+    setApiKey(provider, apiKey);
     
     // Clear warning
     setApiKeyWarning(null);
@@ -121,8 +128,8 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
     }
 
     // Check if API key exists
-    const provider = data.apiSettings?.titleApiProvider || 'openai';
-    const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
+    const provider = data.apiSettings?.titleApiProvider || getPreferredProvider();
+    const key = getApiKey(provider);
     
     if (!key) {
       setError(`No API key found for ${provider}. Please enter your API key in the settings.`);
@@ -136,18 +143,31 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
     try {
       console.log(`Generating titles with provider: ${provider}`);
       
-      const result = await generateMetaTitles({
-        focusKeyword: data.focusKeyword,
-        relatedTerm: data.relatedTerm,
-        provider
-      });
+      // Use our new API module's generateMetaTitles function
+      const result = await generateMetaTitles(
+        data.focusKeyword,
+        data.relatedTerm,
+        {
+          provider,
+          numTitles: 10
+        }
+      );
 
-      if (result.error) {
-        setError(result.error);
-      } else {
+      if (!result.success || result.error) {
+        setError(result.error || 'Failed to generate titles. Please try again.');
+      } else if (result.data && result.data.content) {
+        // Parse titles from the response content
+        // Typically the AI returns a numbered list, so we need to parse it
+        const content = result.data.content;
+        const lines = content.split('\n').filter(line => line.trim() !== '');
+        const titles = lines.map(line => {
+          // Strip numbers, periods, and any extra spaces from the beginning
+          return line.replace(/^\d+\.?\s*/, '').trim();
+        }).filter(title => title.length > 0);
+        
         updateData({ 
-          generatedTitles: result.titles,
-          selectedTitle: result.titles[0] || ''
+          generatedTitles: titles,
+          selectedTitle: titles[0] || ''
         });
         
         setSuccessMessage('Titles generated successfully!');
@@ -156,6 +176,8 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
         setTimeout(() => {
           setSuccessMessage(null);
         }, 3000);
+      } else {
+        setError('No titles were generated. Please try again.');
       }
     } catch (err) {
       console.error('Error details:', err);
@@ -198,8 +220,9 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
   };
 
   const canProceed = !!data.selectedTitle;
-  const currentProvider = data.apiSettings?.titleApiProvider || 'openai';
-  const currentModel = data.apiSettings?.titleApiModel || 'gpt-4o-mini';
+  const currentProvider = data.apiSettings?.titleApiProvider || getPreferredProvider();
+  const currentModel = data.apiSettings?.titleApiModel || getModelForProvider(currentProvider);
+  const modelPresets = getModelPresetsForProvider(currentProvider);
 
   // Helper function to get provider display name
   const getProviderName = (provider: Provider): string => {
@@ -314,7 +337,7 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
                     Select {getProviderName(currentProvider)} Model
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    {modelPresets[currentProvider]?.map((model) => (
+                    {modelPresets.map((model) => (
                       <button
                         key={model.id}
                         onClick={() => handleModelChange(model.id)}
@@ -341,7 +364,7 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
                     <input
                       type="password"
                       value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
+                      onChange={(e) => setApiKeyState(e.target.value)}
                       placeholder={`Enter your ${getProviderName(currentProvider)} API key`}
                       className="flex-grow p-2 border rounded-md"
                     />

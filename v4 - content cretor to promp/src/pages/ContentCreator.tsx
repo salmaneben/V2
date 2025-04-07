@@ -1,6 +1,6 @@
 import React from 'react';
 import { ContentCreatorForm } from '../features/contentCreator/components/ContentCreatorForm';
-import { getApiConfigFromSettings } from '../features/contentCreator/services/apiService';
+import { getApiConfigFromSettings } from "@/api";
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
