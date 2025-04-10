@@ -47,6 +47,12 @@ export const getApiConfig = (provider: Provider = 'perplexity') => {
       endpoint = 'https://api.deepseek.ai/v1/chat/completions';
       break;
 
+    case 'gemini':
+      apiKey = localStorage.getItem('gemini_api_key') || '';
+      model = localStorage.getItem('gemini_model') || 'gemini-1.5-pro';
+      endpoint = 'https://generativelanguage.googleapis.com/v1beta/models';
+      break;
+
     case 'custom':
       apiKey = localStorage.getItem('custom_api_key') || '';
       model = localStorage.getItem('custom_api_model') || '';

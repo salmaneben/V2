@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, CheckCircle, ArrowLeft, ArrowRight, RefreshCw, Edit, Utensils, Settings, Sliders, AlertCircle, Server, Key } from 'lucide-react';
+import { Copy, CheckCircle, ArrowLeft, ArrowRight, RefreshCw, Edit, Utensils, Settings, Sliders, AlertCircle, Server, Key, Stars } from 'lucide-react';
 import { generateContent, generateRecipeContent } from '../utils/blogContentGenerator';
 import { StepProps, Provider } from '../types';
 import AdvancedContentSettings from './AdvancedContentSettings';
@@ -88,6 +88,12 @@ export const ContentStep: React.FC<StepProps> = ({
       { id: 'deepseek-coder', name: 'DeepSeek Coder (Default)', description: 'Code-focused' }, // Simplified default
       // Add other specific DeepSeek models if needed, e.g., deepseek-llm-67b-chat
     ],
+    gemini: [
+      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast & affordable' },
+      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Balanced' },
+      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Advanced & efficient' },
+      { id: 'gemini-2.0-pro', name: 'Gemini 2.0 Pro', description: 'Most capable' }
+    ],
     // 'custom' provider has no presets, models are defined by the user elsewhere
     custom: [],
   };
@@ -99,6 +105,7 @@ export const ContentStep: React.FC<StepProps> = ({
       case 'claude': return 'Anthropic Claude';
       case 'perplexity': return 'Perplexity';
       case 'deepseek': return 'DeepSeek';
+      case 'gemini': return 'Google Gemini';
       case 'custom': return 'Custom API'; // Added custom provider name
       default: return 'API';
     }
@@ -351,6 +358,19 @@ export const ContentStep: React.FC<StepProps> = ({
   // Available models for the currently selected provider
   const availableModels = modelPresets[currentProvider] || [];
 
+  // Function to get provider icon
+  const getProviderIcon = (provider: Provider) => {
+    switch(provider) {
+      case 'openai': return <svg className="h-4 w-4 text-green-500 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.872zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.392.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z" /></svg>;
+      case 'claude': return <svg className="h-4 w-4 text-purple-500 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M18.236 3.982c3.13 0 5.764 2.635 5.764 5.764v4.508c0 3.13-2.635 5.764-5.764 5.764h-4.508L3.982 9.745v4.509c0 3.129-2.635 5.764-5.764 5.764v-16c0-3.13 2.635-5.764 5.764-5.764z" /></svg>;
+      case 'perplexity': return <svg className="h-4 w-4 text-blue-500 mr-1" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="12" /></svg>;
+      case 'deepseek': return <svg className="h-4 w-4 text-gray-500 mr-1" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h18v18H3z" /></svg>;
+      case 'gemini': return <Stars className="h-4 w-4 text-amber-500 mr-1" />;
+      case 'custom': return <Settings className="h-4 w-4 text-gray-500 mr-1" />;
+      default: return <Settings className="h-4 w-4 text-gray-500 mr-1" />;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Success Message */}
@@ -468,8 +488,8 @@ export const ContentStep: React.FC<StepProps> = ({
                     <Server className="h-4 w-4" />
                     <span>Select AI Provider</span>
                   </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {(['openai', 'claude', 'perplexity', 'deepseek', 'custom'] as Provider[]).map((provider) => (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {(['openai', 'claude', 'perplexity', 'deepseek', 'gemini', 'custom'] as Provider[]).map((provider) => (
                       <button
                         key={provider}
                         onClick={() => handleProviderChange(provider)}
@@ -480,7 +500,10 @@ export const ContentStep: React.FC<StepProps> = ({
                         }`}
                         aria-pressed={currentProvider === provider}
                       >
-                        {getProviderName(provider)}
+                        <div className="flex items-center justify-center">
+                          {getProviderIcon(provider)}
+                          <span>{getProviderName(provider)}</span>
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -573,7 +596,14 @@ export const ContentStep: React.FC<StepProps> = ({
                     </button>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Your API key is stored locally in your browser's localStorage.
+                    {currentProvider === 'gemini' && (
+                      <>
+                        You can get your Google Gemini API key from the <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Google AI Studio</a>.
+                      </>
+                    )}
+                    {currentProvider !== 'gemini' && (
+                      <>Your API key is stored locally in your browser's localStorage.</>
+                    )}
                   </p>
                 </div>
               </div>

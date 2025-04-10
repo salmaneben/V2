@@ -8,7 +8,7 @@ import { GeneratedPromptCard } from './GeneratedPromptCard';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { ApiConfig } from '../types';
-import { HelpCircle, ChevronUp, ChevronDown, Sparkles, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { HelpCircle, ChevronUp, ChevronDown, Sparkles, CheckCircle, AlertCircle, Loader2, Stars } from 'lucide-react';
 
 // Hook descriptions object
 const hookDescriptions = {
@@ -72,6 +72,11 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         configured: !!localStorage.getItem('deepseek_api_key')
       },
       { 
+        label: 'Google Gemini', 
+        value: 'gemini',
+        configured: !!localStorage.getItem('gemini_api_key')
+      },
+      { 
         label: 'Custom API', 
         value: 'custom',
         configured: !!(localStorage.getItem('custom_api_key') && localStorage.getItem('custom_api_endpoint'))
@@ -114,6 +119,13 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
           { label: 'DeepSeek Chat', value: 'deepseek-chat' },
           { label: 'DeepSeek Coder', value: 'deepseek-coder' },
         ];
+      case 'gemini':
+        return [
+          { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash' },
+          { label: 'Gemini 2.0 Pro', value: 'gemini-2.0-pro' },
+          { label: 'Gemini 1.5 Pro', value: 'gemini-1.5-pro' },
+          { label: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash' },
+        ];
       case 'custom':
         return [
           { label: localStorage.getItem('custom_api_model') || 'Custom Model', value: localStorage.getItem('custom_api_model') || '' },
@@ -140,6 +152,8 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         defaultModel = localStorage.getItem('claude_model') || 'claude-3-5-sonnet';
       } else if (provider === 'deepseek') {
         defaultModel = localStorage.getItem('deepseek_model') || 'deepseek-chat';
+      } else if (provider === 'gemini') {
+        defaultModel = localStorage.getItem('gemini_model') || 'gemini-2.0-flash';
       } else if (provider === 'custom') {
         defaultModel = localStorage.getItem('custom_api_model') || '';
       }
@@ -169,6 +183,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         break;
       case 'deepseek':
         updatedConfig.apiKey = localStorage.getItem('deepseek_api_key') || '';
+        break;
+      case 'gemini':
+        updatedConfig.apiKey = localStorage.getItem('gemini_api_key') || '';
         break;
       case 'custom':
         updatedConfig.endpoint = localStorage.getItem('custom_api_endpoint') || '';
@@ -253,6 +270,8 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
       localStorage.setItem('claude_model', model);
     } else if (selectedProvider === 'deepseek') {
       localStorage.setItem('deepseek_model', model);
+    } else if (selectedProvider === 'gemini') {
+      localStorage.setItem('gemini_model', model);
     } else if (selectedProvider === 'custom') {
       localStorage.setItem('custom_api_model', model);
     }
@@ -271,6 +290,26 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
     } else {
       // If "None" was selected, clear the custom hook text
       handleInputChange('customHook', '');
+    }
+  };
+  
+  // Get provider icon
+  const getProviderIcon = (provider: string) => {
+    switch(provider) {
+      case 'perplexity':
+        return <Sparkles className="h-4 w-4 text-indigo-500 mr-1" />;
+      case 'openai':
+        return <Sparkles className="h-4 w-4 text-green-500 mr-1" />;
+      case 'claude':
+        return <Sparkles className="h-4 w-4 text-purple-500 mr-1" />;
+      case 'deepseek':
+        return <Sparkles className="h-4 w-4 text-blue-500 mr-1" />;
+      case 'gemini':
+        return <Stars className="h-4 w-4 text-amber-500 mr-1" />;
+      case 'custom':
+        return <Sparkles className="h-4 w-4 text-gray-500 mr-1" />;
+      default:
+        return <Sparkles className="h-4 w-4 text-purple-500 mr-1" />;
     }
   };
 
@@ -292,7 +331,7 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
             <div className="space-y-6">
               <div className="flex flex-col space-y-1.5">
                 <div className="flex items-center mb-2">
-                  <Sparkles className="h-4 w-4 text-purple-500 mr-1" />
+                  {getProviderIcon(selectedProvider)}
                   <label className="text-sm font-medium">AI Provider</label>
                 </div>
                 <select

@@ -5,7 +5,8 @@ export const API_ENDPOINTS = {
   PERPLEXITY: 'https://api.perplexity.ai/chat/completions',
   OPENAI: 'https://api.openai.com/v1/chat/completions',
   CLAUDE: 'https://api.anthropic.com/v1/messages',
-  DEEPSEEK: 'https://api.deepseek.com/v1/chat/completions'
+  DEEPSEEK: 'https://api.deepseek.com/v1/chat/completions',
+  GEMINI: 'https://generativelanguage.googleapis.com/v1beta/models'
 };
 
 // Default models for each provider
@@ -13,7 +14,8 @@ export const DEFAULT_MODELS = {
   PERPLEXITY: 'llama-3.1-sonar-small-128k-online',
   OPENAI: 'gpt-4-turbo',
   CLAUDE: 'claude-3-5-sonnet',
-  DEEPSEEK: 'deepseek-chat'
+  DEEPSEEK: 'deepseek-chat',
+  GEMINI: 'gemini-2.0-flash'
 };
 
 // Default request timeout in milliseconds
@@ -45,4 +47,10 @@ export const MODEL_OPTIONS: ApiModelOption[] = [
   // DeepSeek models
   { label: 'DeepSeek Chat', value: 'deepseek-chat', provider: 'deepseek' },
   { label: 'DeepSeek Reasoner', value: 'deepseek-reasoner', provider: 'deepseek' },
+  
+  // Gemini models
+  { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash', provider: 'gemini' },
+  { label: 'Gemini 2.0 Pro', value: 'gemini-2.0-pro', provider: 'gemini' },
+  { label: 'Gemini 1.5 Pro', value: 'gemini-1.5-pro', provider: 'gemini' },
+  { label: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash', provider: 'gemini' },
 ];

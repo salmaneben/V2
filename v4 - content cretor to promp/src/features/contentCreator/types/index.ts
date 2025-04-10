@@ -215,6 +215,7 @@ export const API_PROVIDERS = [
   { label: 'Perplexity', value: 'perplexity' },
   { label: 'OpenAI', value: 'openai' },
   { label: 'Claude', value: 'claude' },
+  { label: 'Gemini', value: 'gemini' },
   { label: 'Custom API', value: 'custom' },
 ];
 
@@ -238,6 +239,12 @@ export const MODEL_OPTIONS = [
   { label: 'Claude 3 Opus', value: 'claude-3-opus', provider: 'claude' },
   { label: 'Claude 3 Sonnet', value: 'claude-3-sonnet', provider: 'claude' },
   { label: 'Claude 3 Haiku', value: 'claude-3-haiku', provider: 'claude' },
+  
+  // Gemini models
+  { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash', provider: 'gemini' },
+  { label: 'Gemini 2.0 Pro', value: 'gemini-2.0-pro', provider: 'gemini' },
+  { label: 'Gemini 1.5 Pro', value: 'gemini-1.5-pro', provider: 'gemini' },
+  { label: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash', provider: 'gemini' },
 ];
 
 // Default values for the form

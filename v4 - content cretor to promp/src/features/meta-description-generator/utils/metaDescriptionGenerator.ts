@@ -16,7 +16,7 @@ export const generateMetaDescriptions = async (
     switch (provider) {
       case 'perplexity':
         apiKey = localStorage.getItem('perplexity_api_key') || '';
-        model = 'llama-3.1-sonar-small-128k-online'; // Default Perplexity model
+        model = localStorage.getItem('perplexity_model') || 'llama-3.1-sonar-small-128k-online';
         endpoint = 'https://api.perplexity.ai/chat/completions';
         break;
 
@@ -30,6 +30,12 @@ export const generateMetaDescriptions = async (
         apiKey = localStorage.getItem('claude_api_key') || '';
         model = localStorage.getItem('claude_model') || 'claude-3-5-sonnet';
         endpoint = 'https://api.anthropic.com/v1/messages';
+        break;
+        
+      case 'gemini':
+        apiKey = localStorage.getItem('gemini_api_key') || '';
+        model = localStorage.getItem('gemini_model') || 'gemini-2.0-flash';
+        endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         break;
 
       case 'custom':
@@ -163,6 +169,44 @@ export const generateMetaDescriptions = async (
 
       // Extract descriptions from Claude response
       const content = data.content?.[0]?.text || '';
+      return {
+        descriptions: content.split('\n')
+          .map(line => line.trim())
+          .filter(line => line && !line.startsWith('#') && !line.startsWith('*') && !line.startsWith('-'))
+          .slice(0, 10)
+      };
+      
+    } else if (provider === 'gemini') {
+      // For Gemini, the endpoint already includes the API key as a query parameter
+      // We need to use the base URL and model parameter separately
+      const baseEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models';
+      
+      response = await fetch(`${baseEndpoint}/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024
+          }
+        })
+      });
+      
+      data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || `Error: ${response.status}`);
+      }
+
+      // Extract descriptions from Gemini response
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       return {
         descriptions: content.split('\n')
           .map(line => line.trim())

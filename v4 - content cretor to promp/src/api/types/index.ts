@@ -1,6 +1,5 @@
-// Define all API-related types here
-
-export type Provider = 'perplexity' | 'openai' | 'claude' | 'deepseek' | 'custom';
+// Update the Provider type to include 'gemini'
+export type Provider = 'perplexity' | 'openai' | 'claude' | 'deepseek' | 'gemini' | 'custom';
 
 export interface ApiConfig {
   provider: Provider;

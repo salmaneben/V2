@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, RefreshCw, Settings, Server, Key, AlertCircle, 
-  ChevronDown, ChevronUp, HelpCircle, Sliders, Image, Mail, Search, Sparkles } from 'lucide-react';
+  ChevronDown, ChevronUp, HelpCircle, Sliders, Image, Mail, Search, Sparkles, Stars } from 'lucide-react';
 import { StepProps, Provider } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -110,7 +110,7 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
   const verifyApiKey = (provider: Provider) => {
     const key = localStorage.getItem(`${provider}_api_key`) || localStorage.getItem('api_key');
     if (!key) {
-      setApiKeyWarning(`No API key found for ${provider}. Please enter your API key below.`);
+      setApiKeyWarning(`No API key found for ${getProviderName(provider)}. Please enter your API key below.`);
     } else {
       setApiKeyWarning(null);
     }
@@ -136,6 +136,12 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
     deepseek: [
       { id: 'deepseek-chat', name: 'DeepSeek Chat', description: 'General-purpose' },
       { id: 'deepseek-coder', name: 'DeepSeek Coder', description: 'Code-focused' }
+    ],
+    gemini: [
+      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast & affordable' },
+      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Balanced' },
+      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Advanced & efficient' },
+      { id: 'gemini-2.0-pro', name: 'Gemini 2.0 Pro', description: 'Most capable' }
     ]
   };
   
@@ -576,7 +582,16 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
       case 'claude': return 'Anthropic Claude';
       case 'perplexity': return 'Perplexity';
       case 'deepseek': return 'DeepSeek';
+      case 'gemini': return 'Google Gemini';
       default: return 'API';
+    }
+  };
+
+  // Function to get provider icon
+  const getProviderIcon = (provider: Provider) => {
+    switch(provider) {
+      case 'gemini': return <Stars className="h-4 w-4 text-amber-500 mr-1" />;
+      default: return null;
     }
   };
   
@@ -630,8 +645,8 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
                   <Server className="h-4 w-4" />
                   <span>Select AI Provider</span>
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {(['openai', 'claude', 'perplexity', 'deepseek'] as Provider[]).map((provider) => (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {(['openai', 'claude', 'perplexity', 'deepseek', 'gemini'] as Provider[]).map((provider) => (
                     <button
                       key={provider}
                       onClick={() => handleProviderChange(provider)}
@@ -641,7 +656,10 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
                           : 'bg-white hover:bg-gray-50'
                       }`}
                     >
-                      {getProviderName(provider)}
+                      <div className="flex items-center justify-center">
+                        {getProviderIcon(provider)}
+                        <span>{getProviderName(provider)}</span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -695,7 +713,11 @@ export const ContentSettingsStep: React.FC<StepProps> = ({
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Your API key is stored locally in your browser and is never sent to our servers.
+                  {currentProvider === 'gemini' ? (
+                    <>You can get your Google Gemini API key from the <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Google AI Studio</a>.</>
+                  ) : (
+                    <>Your API key is stored locally in your browser and is never sent to our servers.</>
+                  )}
                 </p>
               </div>
             </div>

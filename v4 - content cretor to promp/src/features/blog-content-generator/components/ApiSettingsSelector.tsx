@@ -1,6 +1,6 @@
 // src/features/blog-content-generator/components/ApiSettingsSelector.tsx
 import React, { useState, useEffect } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Stars } from 'lucide-react';
 import { Provider } from '../types';
 
 interface ApiSettingsSelectorProps {
@@ -81,6 +81,13 @@ const ApiSettingsSelector: React.FC<ApiSettingsSelectorProps> = ({
         return [
           { value: 'deepseek-chat', label: 'DeepSeek Chat' },
           { value: 'deepseek-coder', label: 'DeepSeek Coder' }
+        ];
+      case 'gemini':
+        return [
+          { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+          { value: 'gemini-2.0-pro', label: 'Gemini 2.0 Pro' },
+          { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+          { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' }
         ];
       case 'custom':
         return [
@@ -175,6 +182,7 @@ const ApiSettingsSelector: React.FC<ApiSettingsSelectorProps> = ({
               <option value="openai">OpenAI</option>
               <option value="claude">Claude</option>
               <option value="deepseek">DeepSeek</option>
+              <option value="gemini">Google Gemini</option>
               <option value="custom">Custom API</option>
             </select>
           </div>

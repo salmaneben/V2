@@ -42,8 +42,22 @@ const ApiKeyInputComponent: React.FC<ApiKeyInputProps> = ({ provider, onSave }) 
       case 'claude': return 'Anthropic Claude';
       case 'perplexity': return 'Perplexity';
       case 'deepseek': return 'DeepSeek';
+      case 'gemini': return 'Google Gemini';
       case 'custom': return 'Custom API';
       default: return 'API';
+    }
+  };
+
+  const getProviderHelpText = (provider: Provider): string => {
+    switch (provider) {
+      case 'openai':
+        return 'You can find or create your OpenAI API key in the <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenAI dashboard</a>.';
+      case 'claude':
+        return 'You can find or create your Claude API key in the <a href="https://console.anthropic.com/keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Anthropic console</a>.';
+      case 'gemini':
+        return 'You can find or create your Gemini API key in the <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Google AI Studio</a>.';
+      default:
+        return '';
     }
   };
 
@@ -99,12 +113,7 @@ const ApiKeyInputComponent: React.FC<ApiKeyInputProps> = ({ provider, onSave }) 
         
         <div className="text-xs text-gray-500">
           <p>Your API key is stored locally in your browser and is never sent to our servers.</p>
-          {provider === 'openai' && (
-            <p className="mt-1">You can find or create your OpenAI API key in the <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">OpenAI dashboard</a>.</p>
-          )}
-          {provider === 'claude' && (
-            <p className="mt-1">You can find or create your Claude API key in the <a href="https://console.anthropic.com/keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Anthropic console</a>.</p>
-          )}
+          <p className="mt-1" dangerouslySetInnerHTML={{ __html: getProviderHelpText(provider) }}></p>
         </div>
       </div>
     </div>

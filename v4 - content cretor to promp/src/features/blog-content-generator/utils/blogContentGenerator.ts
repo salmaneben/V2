@@ -32,6 +32,9 @@ const processApiResponse = async (response: Response, provider: Provider) => {
     
     if (provider === 'claude') {
       return data.content?.[0]?.text || '';
+    } else if (provider === 'gemini') {
+      // Gemini's response format is different
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     } else {
       return data.choices?.[0]?.message?.content || '';
     }
@@ -85,6 +88,27 @@ export const generateMetaTitles = async (
           model,
           messages: [{ role: 'user', content: promptText }],
           max_tokens: 1024
+        })
+      });
+    } else if (provider === 'gemini') {
+      // Gemini API format
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+            topP: 0.9,
+            topK: 40
+          }
         })
       });
     } else {
@@ -173,6 +197,27 @@ export const generateMetaDescriptions = async (
           max_tokens: 1024
         })
       });
+    } else if (provider === 'gemini') {
+      // Gemini API format
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+            topP: 0.9,
+            topK: 40
+          }
+        })
+      });
     } else {
       // Works for OpenAI, Perplexity, DeepSeek
       response = await fetch(endpoint, {
@@ -254,6 +299,27 @@ export const generateOutline = async (
           model,
           messages: [{ role: 'user', content: promptText }],
           max_tokens: 1500
+        })
+      });
+    } else if (provider === 'gemini') {
+      // Gemini API format
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1500,
+            topP: 0.9,
+            topK: 40
+          }
         })
       });
     } else {
@@ -502,6 +568,27 @@ export const generateContent = async (
           max_tokens: 4000
         })
       });
+    } else if (provider === 'gemini') {
+      // Gemini API format
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4000,
+            topP: 0.9,
+            topK: 40
+          }
+        })
+      });
     } else {
       // Works for OpenAI, Perplexity, DeepSeek
       response = await fetch(endpoint, {
@@ -602,6 +689,27 @@ export const generateRecipeContent = async (
           model,
           messages: [{ role: 'user', content: promptText }],
           max_tokens: 4000
+        })
+      });
+    } else if (provider === 'gemini') {
+      // Gemini API format
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: promptText }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4000,
+            topP: 0.9,
+            topK: 40
+          }
         })
       });
     } else {

@@ -99,6 +99,7 @@ export const MetaTitleGenerator: React.FC<MetaTitleProps> = ({ onSave }) => {
       case 'perplexity': return 'Perplexity AI';
       case 'openai': return 'OpenAI';
       case 'claude': return 'Claude';
+      case 'gemini': return 'Google Gemini';
       case 'custom': return 'Custom API';
       default: return 'Default Provider';
     }

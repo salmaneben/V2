@@ -1,6 +1,6 @@
 // src/features/blog-content-generator/types/index.ts
 
-export type Provider = 'perplexity' | 'openai' | 'claude' | 'deepseek' | 'custom';
+export type Provider = 'perplexity' | 'openai' | 'claude' | 'deepseek' | 'gemini' | 'custom';
 
 export interface StepProps {
   data: any;

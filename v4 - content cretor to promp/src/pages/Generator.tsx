@@ -44,17 +44,18 @@ const Generator: React.FC<GeneratorProps> = ({ sidebarState }) => {
       openai: localStorage.getItem('openai_api_key') || '',
       claude: localStorage.getItem('claude_api_key') || '',
       deepseek: localStorage.getItem('deepseek_api_key') || '',
-      fluxai: localStorage.getItem('fluxai_api_key') || '',
+      gemini: localStorage.getItem('gemini_api_key') || '',
       custom: localStorage.getItem('custom_api_key') || ''
     };
     setApiKeys(keys);
     
     // Load all API models
     const models = {
+      perplexity: localStorage.getItem('perplexity_model') || 'llama-3.1-sonar-small-128k-online',
       openai: localStorage.getItem('openai_model') || 'gpt-4o',
       claude: localStorage.getItem('claude_model') || 'claude-3-5-sonnet',
       deepseek: localStorage.getItem('deepseek_model') || 'deepseek-chat',
-      fluxai: localStorage.getItem('fluxai_model') || 'flux-realism',
+      gemini: localStorage.getItem('gemini_model') || 'gemini-2.0-flash',
       custom: localStorage.getItem('custom_api_model') || '',
     };
     setApiModels(models);
@@ -170,10 +171,33 @@ const Generator: React.FC<GeneratorProps> = ({ sidebarState }) => {
               <option value="openai">OpenAI</option>
               <option value="claude">Anthropic Claude</option>
               <option value="deepseek">DeepSeek</option>
-              <option value="fluxai">Flux AI</option>
+              <option value="gemini">Google Gemini</option>
               <option value="custom">Custom API</option>
             </select>
           </div>
+          
+          {selectedProvider === 'perplexity' && (
+            <div className="flex-1">
+              <label htmlFor="perplexityModel" className="block text-sm font-medium text-gray-700 mb-1">
+                Perplexity Model
+              </label>
+              <select
+                id="perplexityModel"
+                value={apiModels.perplexity}
+                onChange={(e) => {
+                  const newModels = {...apiModels, perplexity: e.target.value};
+                  setApiModels(newModels);
+                  localStorage.setItem('perplexity_model', e.target.value);
+                }}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="llama-3.1-sonar-small-128k-online">Llama 3.1 Sonar Small</option>
+                <option value="llama-3.1-sonar-medium-128k-online">Llama 3.1 Sonar Medium</option>
+                <option value="sonar-small-online">Sonar Small</option>
+                <option value="sonar-medium-online">Sonar Medium</option>
+              </select>
+            </div>
+          )}
           
           {selectedProvider === 'openai' && (
             <div className="flex-1">
@@ -239,6 +263,29 @@ const Generator: React.FC<GeneratorProps> = ({ sidebarState }) => {
               >
                 <option value="deepseek-chat">DeepSeek Chat</option>
                 <option value="deepseek-coder">DeepSeek Coder</option>
+              </select>
+            </div>
+          )}
+
+          {selectedProvider === 'gemini' && (
+            <div className="flex-1">
+              <label htmlFor="geminiModel" className="block text-sm font-medium text-gray-700 mb-1">
+                Gemini Model
+              </label>
+              <select
+                id="geminiModel"
+                value={apiModels.gemini}
+                onChange={(e) => {
+                  const newModels = {...apiModels, gemini: e.target.value};
+                  setApiModels(newModels);
+                  localStorage.setItem('gemini_model', e.target.value);
+                }}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                <option value="gemini-2.0-pro">Gemini 2.0 Pro</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
               </select>
             </div>
           )}

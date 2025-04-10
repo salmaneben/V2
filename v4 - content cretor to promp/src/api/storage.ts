@@ -1,4 +1,4 @@
-import { ApiConfig, Provider } from './types';
+import { ApiConfig, Provider, ApiModelOption } from './types';
 import { DEFAULT_MODELS } from './config';
 
 // Get API key for a specific provider
@@ -44,6 +44,8 @@ export const getModelForProvider = (provider: Provider): string => {
       return DEFAULT_MODELS.CLAUDE;
     case 'deepseek':
       return DEFAULT_MODELS.DEEPSEEK;
+    case 'gemini':
+      return DEFAULT_MODELS.GEMINI;
     case 'custom':
       return localStorage.getItem('custom_api_model') || '';
     default:

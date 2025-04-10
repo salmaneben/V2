@@ -1,8 +1,7 @@
-// src/features/settings/components/APISettings.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Loader2, CheckCircle, AlertCircle, Lock, Globe, Sparkles, Server, Brain, Cpu, Code } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, Lock, Globe, Sparkles, Server, Brain, Cpu, Code, Stars } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   Provider, 
@@ -30,6 +29,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
     openai: '',
     claude: '',
     deepseek: '',
+    gemini: '',
     custom: ''
   });
   
@@ -38,6 +38,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
     openai: '',
     claude: '',
     deepseek: '',
+    gemini: '',
     custom: ''
   });
   
@@ -63,6 +64,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
     openai: { label: 'OpenAI', icon: Brain },
     claude: { label: 'Claude', icon: Cpu },
     deepseek: { label: 'DeepSeek', icon: Code },
+    gemini: { label: 'Gemini', icon: Stars },
     custom: { label: 'Custom API', icon: Server }
   };
   
@@ -75,7 +77,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
     const keys: Record<Provider, string> = {} as Record<Provider, string>;
     const modelSettings: Record<Provider, string> = {} as Record<Provider, string>;
     
-    (['perplexity', 'openai', 'claude', 'deepseek', 'custom'] as Provider[]).forEach((provider) => {
+    (['perplexity', 'openai', 'claude', 'deepseek', 'gemini', 'custom'] as Provider[]).forEach((provider) => {
       const config = getApiConfig(provider);
       keys[provider] = config.apiKey;
       modelSettings[provider] = config.model || '';
@@ -140,7 +142,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
       config.verifySSL = customSettings.verifySSL;
     }
     
-    await testApiConnection(selectedProvider, config);
+    await testApiConnection(config);
   };
   
   // Get model options for the current provider
@@ -153,7 +155,7 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
       <h2 className="text-2xl font-bold">API Settings</h2>
       
       {/* Provider Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
         {Object.entries(providerInfo).map(([provider, info]) => {
           const Icon = info.icon;
           return (
@@ -196,6 +198,11 @@ const APISettings: React.FC<APISettingsProps> = ({ onSettingsChange }) => {
               />
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             </div>
+            {selectedProvider === 'gemini' && (
+              <p className="text-xs text-gray-500 mt-1">
+                Enter your Google Gemini API key. You can find this in the Google AI Studio console.
+              </p>
+            )}
           </div>
           
           {/* Model Selection - For all except custom */}

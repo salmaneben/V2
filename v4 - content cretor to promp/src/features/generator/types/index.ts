@@ -73,6 +73,15 @@ export interface FormData {
   numberOfVideos: number;
   layoutOptions: string;
   strictMediaPlacement: boolean;
+  
+  // Hook Section
+  hookType: string;
+  hookBrief: string;
+  
+  // Additional fields
+  links?: string;
+  internalLinks?: string;
+  imageDetails?: string;
 }
 
 // Define provider options
@@ -81,6 +90,7 @@ export type ApiProviderOption =
   | "openai"
   | "claude"
   | "deepseek"
+  | "gemini"
   | "fluxai"
   | "custom";
 
@@ -105,6 +115,7 @@ export const ApiModels: Record<ApiProviderOption, string[]> = {
   openai: ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
   claude: ["claude-3-5-sonnet", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku"],
   deepseek: ["deepseek-chat", "deepseek-coder"],
+  gemini: ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"],
   fluxai: ["flux-realism"],
   custom: []
 };

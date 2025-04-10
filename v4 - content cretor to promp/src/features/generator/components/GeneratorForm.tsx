@@ -11,7 +11,8 @@ import {
   Brain,
   Cpu,
   Palette,
-  Server
+  Server,
+  Stars
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { hookTypes } from '../constants/hookTypes';
@@ -50,6 +51,8 @@ const GeneratorForm: React.FC<GeneratorFormProps> = ({ onSubmit, sidebarState, a
         return <Cpu className="h-5 w-5 text-purple-500" />;
       case 'deepseek':
         return <Sparkles className="h-5 w-5 text-blue-500" />;
+      case 'gemini':
+        return <Stars className="h-5 w-5 text-amber-500" />;
       case 'fluxai':
         return <Palette className="h-5 w-5 text-orange-500" />;
       case 'custom':

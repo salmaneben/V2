@@ -3,6 +3,7 @@ import PerplexityProvider from './providers/perplexity';
 import OpenAIProvider from './providers/openai';
 import ClaudeProvider from './providers/claude';
 import DeepSeekProvider from './providers/deepseek';
+import GeminiProvider from './providers/gemini';
 import CustomProvider from './providers/custom';
 import { MODEL_OPTIONS } from './config';
 
@@ -17,6 +18,8 @@ export const getApiProvider = (provider: Provider) => {
       return new ClaudeProvider();
     case 'deepseek':
       return new DeepSeekProvider();
+    case 'gemini':
+      return new GeminiProvider();
     case 'custom':
       return new CustomProvider();
     default:
@@ -84,6 +87,7 @@ export const getProviders = () => {
     { value: 'openai', label: 'OpenAI' },
     { value: 'claude', label: 'Claude' },
     { value: 'deepseek', label: 'DeepSeek' },
+    { value: 'gemini', label: 'Gemini' },
     { value: 'custom', label: 'Custom API' }
   ];
 };

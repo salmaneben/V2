@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, CheckCircle, RefreshCw, ArrowRight, Settings, AlertCircle, Server, Key } from 'lucide-react';
+import { Copy, CheckCircle, RefreshCw, ArrowRight, Settings, AlertCircle, Server, Key, Stars } from 'lucide-react';
 import { StepProps, Provider } from '../types';
 import { 
   generateMetaTitles 
@@ -90,8 +90,17 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
       case 'claude': return 'Anthropic Claude';
       case 'perplexity': return 'Perplexity';
       case 'deepseek': return 'DeepSeek';
+      case 'gemini': return 'Google Gemini';
       case 'custom': return 'Custom API'; // Added custom provider name
       default: return provider.toUpperCase(); // Fallback for unknown providers
+    }
+  };
+
+  // Function to get provider icon
+  const getProviderIcon = (provider: Provider) => {
+    switch(provider) {
+      case 'gemini': return <Stars className="h-4 w-4 text-amber-500 mr-1" />;
+      default: return null;
     }
   };
 
@@ -341,9 +350,9 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
                      <Server className="h-4 w-4" />
                      <span>Select AI Provider</span>
                    </label>
-                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                      {/* Map through available providers */}
-                     {(['openai', 'claude', 'perplexity', 'deepseek', 'custom'] as Provider[]).map((provider) => (
+                     {(['openai', 'claude', 'perplexity', 'deepseek', 'gemini', 'custom'] as Provider[]).map((provider) => (
                        <button
                          key={provider}
                          onClick={() => handleProviderChange(provider)}
@@ -354,7 +363,10 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
                          }`}
                          aria-pressed={currentProvider === provider}
                        >
-                         {getProviderName(provider)}
+                         <div className="flex items-center justify-center">
+                           {getProviderIcon(provider)}
+                           <span>{getProviderName(provider)}</span>
+                         </div>
                        </button>
                      ))}
                    </div>
@@ -448,7 +460,11 @@ export const MetaTitleStep: React.FC<StepProps> = ({ data, updateData, onNextSte
                      </button>
                    </div>
                    <p className="text-xs text-gray-500 mt-1">
-                     Your API key is stored locally in your browser's localStorage.
+                     {currentProvider === 'gemini' ? (
+                       <>You can get your Google Gemini API key from the <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Google AI Studio</a>.</>
+                     ) : (
+                       <>Your API key is stored locally in your browser's localStorage.</>
+                     )}
                    </p>
                  </div>
                </div>
