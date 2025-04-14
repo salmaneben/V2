@@ -13,45 +13,49 @@ import ApiSettings from './pages/ApiSettings';
 import MetaTitleGenerator from './pages/MetaTitleGenerator';
 import MetaDescriptionGenerator from './pages/MetaDescriptionGenerator';
 import BlogContentGeneratorPage from './pages/BlogContentGenerator';
+import ArticleGeneratorPage from './pages/ArticleGenerator';
+import PromptGeneratorPage from './pages/PromptGenerator'; // Import the new PromptGenerator page
 import './App.css';
 import { ToastProvider } from './components/ui/toast';
-
 
 // Layout wrapper component
 const AppLayout = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
-  const [sidebarState, setSidebarState] = useState('collapsed'); // 'collapsed', 'expanded', or 'closed'
+  const [sidebarState, setSidebarState] = useState(() => {
+    // Get saved state from localStorage
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved === 'true' ? 'collapsed' : 'expanded';
+  });
   
-  // Monitor sidebar state changes using MutationObserver
+  // Monitor sidebar state changes
   useEffect(() => {
-    const checkSidebarState = () => {
-      const sidebar = document.querySelector('[class*="fixed left-0"]');
-      if (sidebar) {
-        const sidebarClasses = sidebar.className;
-        if (sidebarClasses.includes('w-[96px]')) {
-          setSidebarState('collapsed');
-        } else if (sidebarClasses.includes('w-64')) {
-          setSidebarState('expanded');
-        }
+    const handleStorageChange = (e) => {
+      if (e.key === 'sidebarCollapsed') {
+        setSidebarState(e.newValue === 'true' ? 'collapsed' : 'expanded');
       }
     };
     
-    const observer = new MutationObserver(checkSidebarState);
-    const sidebar = document.querySelector('[class*="fixed left-0"]');
-    
-    if (sidebar) {
-      observer.observe(sidebar, { 
-        attributes: true, 
-        attributeFilter: ['class'] 
-      });
-      
-      // Initial check
-      checkSidebarState();
-    }
+    window.addEventListener('storage', handleStorageChange);
     
     return () => {
-      observer.disconnect();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+  
+  // Check changes from sidebar component directly
+  useEffect(() => {
+    const checkSidebarState = () => {
+      const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+      setSidebarState(isCollapsed ? 'collapsed' : 'expanded');
+    };
+    
+    // Run initially and when sidebar might change
+    checkSidebarState();
+    window.addEventListener('resize', checkSidebarState);
+    
+    return () => {
+      window.removeEventListener('resize', checkSidebarState);
     };
   }, []);
   
@@ -61,8 +65,11 @@ const AppLayout = () => {
       
       <main 
         className={`flex-1 transition-all duration-300 ${
-          !isHomePage ? (sidebarState === 'collapsed' ? 'ml-[96px]' : sidebarState === 'expanded' ? 'ml-64' : 'ml-0') : ''
-        }`}
+          !isHomePage ? (
+            sidebarState === 'collapsed' ? 'ml-[96px]' : 
+            sidebarState === 'expanded' ? 'ml-64' : 'ml-0'
+          ) : ''
+        } md:pt-0 pt-16`} // Added top padding for mobile
         data-sidebar-state={sidebarState}
       >
         {isHomePage && <Header />}
@@ -79,6 +86,9 @@ const AppLayout = () => {
           <Route path="/meta-title-generator" element={<MetaTitleGenerator sidebarState={sidebarState} />} />
           <Route path="/meta-description-generator" element={<MetaDescriptionGenerator sidebarState={sidebarState} />} />
           <Route path="/blog-content-generator" element={<BlogContentGeneratorPage sidebarState={sidebarState} />} />
+          <Route path="/article-generator" element={<ArticleGeneratorPage sidebarState={sidebarState} />} />
+          {/* Add the new Prompt Generator route */}
+          <Route path="/prompt-generator" element={<PromptGeneratorPage sidebarState={sidebarState} />} />
         </Routes>
       </main>
     </div>

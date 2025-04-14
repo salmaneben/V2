@@ -1,0 +1,209 @@
+/* src/pages/Dashboard.css */
+
+/* Subtle float animation for stat cards */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  .stat-card {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: calc(var(--index) * 0.3s);
+  }
+  
+  /* Gradient shift animation for tool cards */
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .gradient-bg {
+    background-size: 200% 200%;
+    animation: gradient-shift 5s ease infinite;
+  }
+  
+  /* Shimmer effect for cards */
+  @keyframes shimmer {
+    0% {
+      background-position: -100% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  .shimmer-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer-effect::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: translateX(-100%);
+    animation: shimmer 2.5s infinite;
+    pointer-events: none;
+  }
+  
+  /* Pulse effect for status indicators */
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+  }
+  
+  .pulse-effect {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
+  /* Hover effect for cards */
+  .hover-lift {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.2);
+  }
+  
+  /* Icon rotation animation */
+  @keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .rotate-icon {
+    animation: rotate 20s linear infinite;
+  }
+  
+  /* Chart container animations */
+  .chart-container {
+    transition: all 0.3s ease;
+    transform: scale(0.98);
+    opacity: 0.95;
+  }
+  
+  .chart-container:hover {
+    transform: scale(1);
+    opacity: 1;
+  }
+  
+  /* Gradient text animation */
+  .animated-gradient-text {
+    background: linear-gradient(to right, #4f46e5, #8b5cf6, #4f46e5);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 5s ease infinite;
+  }
+  
+  /* Section entrance animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .dashboard-section {
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+    animation-delay: calc(var(--section-index) * 0.15s);
+  }
+  
+  /* Refresh button animation */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .refresh-icon {
+    transition: transform 0.3s ease;
+  }
+  
+  .refresh-icon:hover {
+    transform: rotate(180deg);
+  }
+  
+  .refresh-active {
+    animation: spin 0.8s linear infinite;
+  }
+  
+  /* Document list item animations */
+  .document-item {
+    transition: all 0.2s ease-out;
+  }
+  
+  .document-item:hover {
+    background-color: rgba(79, 70, 229, 0.1);
+    transform: translateX(5px);
+  }
+  
+  /* Empty state animation */
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    50% { transform: scale(1.02); opacity: 0.8; }
+    100% { transform: scale(0.9); opacity: 0.6; }
+  }
+  
+  .empty-state-icon {
+    animation: pulse-ring 3s infinite;
+  }
+  
+  /* Button animation */
+  .action-button {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .action-button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.13) 50%,
+      transparent 100%
+    );
+    transform: rotate(45deg);
+    transition: all 0.3s;
+  }
+  
+  .action-button:hover::after {
+    transform: rotate(45deg) translateY(-100px);
+  }
+  
+  /* Apply animations to specific elements */
+  .stat-card:nth-child(1) { --index: 1; }
+  .stat-card:nth-child(2) { --index: 2; }
+  .stat-card:nth-child(3) { --index: 3; }
+  .stat-card:nth-child(4) { --index: 4; }
+  
+  .dashboard-section:nth-child(1) { --section-index: 1; }
+  .dashboard-section:nth-child(2) { --section-index: 2; }
+  .dashboard-section:nth-child(3) { --section-index: 3; }
+  .dashboard-section:nth-child(4) { --section-index: 4; }
+  .dashboard-section:nth-child(5) { --section-index: 5; }
+  .dashboard-section:nth-child(6) { --section-index: 6; }

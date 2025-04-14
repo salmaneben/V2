@@ -1,0 +1,302 @@
+/* src/components/layout/Sidebar.css */
+
+/* ===== TOGGLE BUTTON ANIMATIONS ===== */
+
+/* Pulsing animation for the toggle button */
+@keyframes pulse-ring {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.2;
+    }
+    50% {
+      opacity: 0.4;
+    }
+    100% {
+      transform: scale(1.2);
+      opacity: 0;
+    }
+  }
+  
+  .pulse-effect {
+    animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+  }
+  
+  /* Focus/Hover effect */
+  .toggle-button:hover {
+    transform: scale(1.08);
+  }
+  
+  .toggle-button:active {
+    transform: scale(0.95);
+  }
+  
+  /* Pressed state effect */
+  .toggle-button:active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    z-index: 1;
+  }
+  
+  /* Shine effect */
+  .toggle-button::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 30%,
+      transparent 70%
+    );
+    transform: rotate(25deg);
+    transition: transform 0.5s;
+    z-index: 0;
+  }
+  
+  .toggle-button:hover::before {
+    transform: rotate(65deg) translateY(-10%);
+  }
+  
+  /* Create a subtle 3D effect with shadow */
+  .toggle-button {
+    box-shadow: 
+      0 0 15px rgba(79, 70, 229, 0.4),
+      0 1px 3px rgba(0, 0, 0, 0.1),
+      0 3px 6px rgba(0, 0, 0, 0.2),
+      inset 0 -2px 5px rgba(0, 0, 0, 0.2),
+      inset 0 2px 5px rgba(255, 255, 255, 0.2);
+  }
+  
+  .toggle-button:hover {
+    box-shadow: 
+      0 0 20px rgba(79, 70, 229, 0.6),
+      0 1px 3px rgba(0, 0, 0, 0.1),
+      0 3px 8px rgba(0, 0, 0, 0.2),
+      inset 0 -2px 5px rgba(0, 0, 0, 0.2),
+      inset 0 2px 5px rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Create smooth animation for icon rotation on toggle */
+  @keyframes rotate-right {
+    from { transform: rotate(-90deg); opacity: 0; }
+    to { transform: rotate(0); opacity: 1; }
+  }
+  
+  @keyframes rotate-left {
+    from { transform: rotate(90deg); opacity: 0; }
+    to { transform: rotate(0); opacity: 1; }
+  }
+  
+  .toggle-button svg {
+    animation: rotate-right 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  
+  .toggle-button.open svg {
+    animation: rotate-left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  
+  /* ===== NAVIGATION ITEM ANIMATIONS ===== */
+  
+  /* Elegant animations for sidebar elements */
+  .sidebar-icon {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .sidebar-nav-item:hover .sidebar-icon {
+    transform: translateY(-2px);
+  }
+  
+  .sidebar-nav-item {
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  .sidebar-nav-item:hover {
+    transform: translateX(2px);
+  }
+  
+  /* ===== STATUS INDICATOR ===== */
+  
+  /* Glowing effect for active status */
+  .status-indicator {
+    position: relative;
+  }
+  
+  .status-indicator::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+  
+  /* ===== SIDEBAR CONTAINER ===== */
+  
+  /* Smooth transition for sidebar collapse/expand */
+  .sidebar-container {
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* ===== SCROLLBAR STYLING ===== */
+  
+  /* Professional scrollbar styling */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5);
+    border-radius: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.7);
+  }
+  
+  /* ===== BACKGROUND PATTERN ANIMATION ===== */
+  
+  /* Background pattern animation */
+  @keyframes patternMove {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 50px 50px;
+    }
+  }
+  
+  .animated-pattern {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    animation: patternMove 50s linear infinite;
+  }
+  
+  /* ===== LOGO ANIMATION ===== */
+  
+  /* Logo hover animation */
+  .sidebar-logo {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .sidebar-logo:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* ===== ACTIVE INDICATOR ===== */
+  
+  /* Active indicator glow effect */
+  .active-indicator {
+    position: relative;
+  }
+  
+  .active-indicator::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+    opacity: 0.8;
+  }
+  
+  /* ===== MOBILE MENU ANIMATIONS ===== */
+  
+  /* Smooth mobile overlay transition */
+  .mobile-overlay {
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  
+  .mobile-sidebar {
+    animation: slideIn 0.25s ease-out forwards;
+  }
+  
+  /* ===== ACTIVE ITEM EFFECTS ===== */
+  
+  /* Active nav item hover effect */
+  .nav-item-active:hover {
+    background-color: rgba(79, 70, 229, 0.6) !important;
+  }
+  
+  /* Gradient text for section titles */
+  .section-title {
+    background: linear-gradient(90deg, rgba(129, 140, 248, 1), rgba(168, 85, 247, 0.8));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Subtle shimmer effect for active items */
+  @keyframes shimmer {
+    0% {
+      background-position: -100% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  .nav-item-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+    pointer-events: none;
+  }
+  
+  /* ===== OTHER UI ENHANCEMENTS ===== */
+  
+  /* Button focus styles */
+  button:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: 2px;
+  }
+  
+  /* Main content transition to match sidebar */
+  .main-content {
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }

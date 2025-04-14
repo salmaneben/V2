@@ -8,7 +8,13 @@ import { GeneratedPromptCard } from './GeneratedPromptCard';
 import { Spinner } from '@/components/ui/spinner';
 import { Alert } from '@/components/ui/alert';
 import { ApiConfig } from '../types';
-import { HelpCircle, ChevronUp, ChevronDown, Sparkles, CheckCircle, AlertCircle, Loader2, Stars } from 'lucide-react';
+import { 
+  HelpCircle, ChevronUp, ChevronDown, Sparkles, CheckCircle, AlertCircle, 
+  Loader2, Stars, FileText, Hash, Globe, Users, Search, Zap, 
+  ListChecks, Link, ExternalLink, Settings, Type, LayoutList,
+  Lightbulb, BrainCircuit, CheckSquare, Languages, MapPin, BookOpen,
+  AlignLeft, LucideProps, Copy, CheckCircle2, ThumbsUp, Info
+} from 'lucide-react';
 
 // Hook descriptions object
 const hookDescriptions = {
@@ -18,6 +24,13 @@ const hookDescriptions = {
   "Anecdotal or Story": "Create a brief, engaging story or anecdote that is relevant to the article's main subject. This story should be relatable and set the stage for the main content.",
   "Personal or Emotional": "Start with a personal experience or an emotional appeal that connects with the reader on a deeper level. This approach should establish empathy and make the topic feel more relevant to the reader's life."
 };
+
+// Helper function for section icons with consistent styling
+const SectionIcon = ({ icon: Icon, ...props }: { icon: React.ElementType } & LucideProps) => (
+  <span className="inline-flex items-center justify-center p-1 rounded-md bg-emerald-100">
+    <Icon className="h-4 w-4 text-emerald-600" {...props} />
+  </span>
+);
 
 interface ContentCreatorFormProps {
   onSubmit?: (data: any) => void;
@@ -293,51 +306,90 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
     }
   };
   
-  // Get provider icon
+  // Get provider icon with enhanced styling
   const getProviderIcon = (provider: string) => {
     switch(provider) {
       case 'perplexity':
-        return <Sparkles className="h-4 w-4 text-indigo-500 mr-1" />;
+        return (
+          <span className="inline-flex items-center justify-center p-1 rounded-md bg-indigo-100">
+            <Sparkles className="h-4 w-4 text-indigo-500" />
+          </span>
+        );
       case 'openai':
-        return <Sparkles className="h-4 w-4 text-green-500 mr-1" />;
+        return (
+          <span className="inline-flex items-center justify-center p-1 rounded-md bg-green-100">
+            <Sparkles className="h-4 w-4 text-green-500" />
+          </span>
+        );
       case 'claude':
-        return <Sparkles className="h-4 w-4 text-purple-500 mr-1" />;
+        return (
+          <span className="inline-flex items-center justify-center p-1 rounded-md bg-purple-100">
+            <Sparkles className="h-4 w-4 text-purple-500" />
+          </span>
+        );
       case 'deepseek':
-        return <Sparkles className="h-4 w-4 text-blue-500 mr-1" />;
+        return (
+          <span className="inline-flex items-center justify-center p-1 rounded-md bg-blue-100">
+            <Sparkles className="h-4 w-4 text-blue-500" />
+          </span>
+        );
       case 'gemini':
-        return <Stars className="h-4 w-4 text-amber-500 mr-1" />;
+        return (
+          <span className="inline-flex items-center justify-center p-1 rounded-md bg-amber-100">
+            <Stars className="h-4 w-4 text-amber-500" />
+          </span>
+        );
       case 'custom':
-        return <Sparkles className="h-4 w-4 text-gray-500 mr-1" />;
+        return (
+          <span className="inline-flex items-center justify-center p-1 rounded-md bg-gray-100">
+            <Sparkles className="h-4 w-4 text-gray-500" />
+          </span>
+        );
       default:
-        return <Sparkles className="h-4 w-4 text-purple-500 mr-1" />;
+        return (
+          <span className="inline-flex items-center justify-center p-1 rounded-md bg-purple-100">
+            <Sparkles className="h-4 w-4 text-purple-500" />
+          </span>
+        );
     }
   };
 
+  // Custom spinner component to match our design
+  const CustomSpinner = () => (
+    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-emerald-500 border-t-transparent"></div>
+  );
+
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* AI Settings Section */}
-      <Card className="w-full">
-        <CardHeader className="cursor-pointer" onClick={() => toggleSection('aiSettings')}>
-          <div className="flex justify-between items-center">
-            <CardTitle>AI Settings</CardTitle>
+      {/* Enhanced Card Style for AI Settings Section */}
+      <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+        <CardHeader 
+          className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+          onClick={() => toggleSection('aiSettings')}
+        >
+          <div className="flex justify-between items-center w-full">
+            <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+              <SectionIcon icon={BrainCircuit} />
+              AI Settings
+            </CardTitle>
             {expandedSections.aiSettings ? 
-              <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-              <ChevronDown className="h-5 w-5 text-gray-400" />
+              <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+              <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
             }
           </div>
         </CardHeader>
         {expandedSections.aiSettings && (
-          <CardContent className="space-y-4">
+          <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
             <div className="space-y-6">
-              <div className="flex flex-col space-y-1.5">
+              <div className="mb-5">
                 <div className="flex items-center mb-2">
                   {getProviderIcon(selectedProvider)}
-                  <label className="text-sm font-medium">AI Provider</label>
+                  <label className="text-sm font-medium text-gray-700 ml-2 flex items-center">AI Provider</label>
                 </div>
                 <select
                   value={selectedProvider}
                   onChange={handleProviderChange}
-                  className="border rounded-md p-2"
+                  className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                 >
                   {availableProviders.map(provider => (
                     <option 
@@ -352,15 +404,19 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                 </select>
               </div>
 
-              <div className="flex flex-col space-y-1.5">
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+
+              <div className="mb-5">
                 <div className="flex items-center mb-2">
-                  <Sparkles className="h-4 w-4 text-purple-500 mr-1" />
-                  <label className="text-sm font-medium">AI Model</label>
+                  <span className="inline-flex items-center justify-center p-1 rounded-md bg-emerald-100">
+                    <Sparkles className="h-4 w-4 text-emerald-600" />
+                  </span>
+                  <label className="text-sm font-medium text-gray-700 ml-2">AI Model</label>
                 </div>
                 <select
                   value={selectedModel}
                   onChange={handleModelChange}
-                  className="border rounded-md p-2"
+                  className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                 >
                   {modelOptions.map(model => (
                     <option key={model.value} value={model.value}>
@@ -371,37 +427,37 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
               </div>
               
               {selectedProvider === 'custom' && (
-                <div className="space-y-3 bg-blue-50 p-4 rounded-md">
+                <div className="space-y-3 bg-emerald-50 p-4 rounded-md border border-emerald-100 shadow-sm">
                   <div>
-                    <label className="block text-gray-700 font-medium mb-1 text-sm">API Endpoint</label>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">API Endpoint</label>
                     <input
                       type="text"
                       value={formData.customApiEndpoint || ""}
                       onChange={(e) => handleInputChange('customApiEndpoint', e.target.value)}
                       placeholder="https://api.yourservice.com/v1/completion"
-                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-gray-700 font-medium mb-1 text-sm">API Key</label>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">API Key</label>
                     <input
                       type="password"
                       value={formData.customApiKey || ""}
                       onChange={(e) => handleInputChange('customApiKey', e.target.value)}
                       placeholder="Enter your API key"
-                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-gray-700 font-medium mb-1 text-sm">Model Name (Optional)</label>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Model Name (Optional)</label>
                     <input
                       type="text"
                       value={formData.customApiModel || ""}
                       onChange={(e) => handleInputChange('customApiModel', e.target.value)}
                       placeholder="e.g., gpt-4-turbo, claude-3-opus"
-                      className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                      className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                     />
                   </div>
                   
@@ -411,24 +467,24 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                       id="customApiVerify"
                       checked={formData.customApiVerify || false}
                       onChange={(e) => handleInputChange('customApiVerify', e.target.checked)}
-                      className="mr-2"
+                      className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                     />
-                    <label htmlFor="customApiVerify" className="text-sm text-gray-700">
+                    <label htmlFor="customApiVerify" className="ml-2 text-sm text-gray-700">
                       Verify SSL certificate
                     </label>
                   </div>
                   
                   <button
                     type="button"
-                    className={`w-full p-2 flex justify-center items-center ${
+                    className={`w-full py-2 px-3 flex justify-center items-center rounded-md transition-colors text-sm font-medium ${
                       apiTestStatus === 'testing' 
-                        ? 'bg-blue-400' 
+                        ? 'bg-emerald-400 text-white opacity-75 cursor-not-allowed' 
                         : apiTestStatus === 'success' 
-                          ? 'bg-green-600 hover:bg-green-700' 
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
                           : apiTestStatus === 'error' 
-                            ? 'bg-red-600 hover:bg-red-700' 
-                            : 'bg-blue-600 hover:bg-blue-700'
-                    } text-white rounded-md text-sm font-medium`}
+                            ? 'bg-red-600 hover:bg-red-700 text-white' 
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    }`}
                     onClick={() => {
                       // Set states for test connection
                       if (!formData.customApiEndpoint || !formData.customApiKey) {
@@ -450,8 +506,8 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                   >
                     {apiTestStatus === 'testing' ? (
                       <>
-                        <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                        Testing...
+                        <CustomSpinner />
+                        <span className="ml-2">Testing...</span>
                       </>
                     ) : apiTestStatus === 'success' ? (
                       <>
@@ -470,7 +526,7 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                   
                   {apiTestStatus !== 'idle' && (
                     <div className={`mt-2 text-sm ${
-                      apiTestStatus === 'success' ? 'text-green-600' : 'text-red-600'
+                      apiTestStatus === 'success' ? 'text-emerald-600' : 'text-red-600'
                     }`}>
                       {apiTestMessage}
                     </div>
@@ -485,59 +541,87 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Display error if any */}
         {apiError && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="border-red-300 bg-red-50 text-red-800">
+            <AlertCircle className="h-4 w-4 mr-2" />
             {apiError}
           </Alert>
         )}
 
         {/* Basic Info Section */}
-        <Card className="w-full">
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('basicInfo')}>
-            <div className="flex justify-between items-center">
-              <CardTitle>Basic Info</CardTitle>
+        <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+          <CardHeader 
+            className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+            onClick={() => toggleSection('basicInfo')}
+          >
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+                <SectionIcon icon={FileText} />
+                Basic Info
+              </CardTitle>
               {expandedSections.basicInfo ? 
-                <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+                <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
               }
             </div>
           </CardHeader>
           {expandedSections.basicInfo && (
-            <CardContent className="space-y-4">
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium">Main Keyword</label>
+            <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
+              <div className="mb-5">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Hash className="h-4 w-4 text-emerald-500 mr-1" />
+                  Main Keyword
+                </label>
                 <Input
                   placeholder="Enter your main keyword or topic"
                   value={formData.mainKeyword}
                   onChange={(e) => handleInputChange('mainKeyword', e.target.value)}
                   required
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium">Title</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <FileText className="h-4 w-4 text-emerald-500 mr-1" />
+                    Title
+                  </label>
                   <Button 
                     type="button" 
                     size="sm" 
                     variant="outline"
                     onClick={generateTitle}
                     disabled={!formData.mainKeyword || isGeneratingTitle}
+                    className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                   >
-                    {isGeneratingTitle ? <Spinner size="sm" /> : 'Generate'}
+                    {isGeneratingTitle ? (
+                      <CustomSpinner />
+                    ) : (
+                      <Sparkles className="h-3 w-3 mr-1" />
+                    )}
+                    <span className="ml-1">{isGeneratingTitle ? 'Generating...' : 'Generate'}</span>
                   </Button>
                 </div>
                 <Input
                   placeholder="Title for your content"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium">Language</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Languages className="h-4 w-4 text-emerald-500 mr-1" />
+                    Language
+                  </label>
                   <select
-                    className="border rounded-md p-2"
+                    className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                     value={formData.language}
                     onChange={(e) => handleInputChange('language', e.target.value)}
                   >
@@ -603,10 +687,13 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                   </select>
                 </div>
                 
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium">Country/Region</label>
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="h-4 w-4 text-emerald-500 mr-1" />
+                    Country/Region
+                  </label>
                   <select
-                    className="border rounded-md p-2"
+                    className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                     value={formData.country}
                     onChange={(e) => handleInputChange('country', e.target.value)}
                   >
@@ -627,17 +714,28 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                 </div>
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium">Target Audience</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <Users className="h-4 w-4 text-emerald-500 mr-1" />
+                    Target Audience
+                  </label>
                   <Button 
                     type="button" 
                     size="sm" 
                     variant="outline"
                     onClick={generateTargetAudience}
                     disabled={!formData.mainKeyword || isGeneratingTargetAudience}
+                    className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                   >
-                    {isGeneratingTargetAudience ? <Spinner size="sm" /> : 'Generate'}
+                    {isGeneratingTargetAudience ? (
+                      <CustomSpinner />
+                    ) : (
+                      <Sparkles className="h-3 w-3 mr-1" />
+                    )}
+                    <span className="ml-1">{isGeneratingTargetAudience ? 'Generating...' : 'Generate'}</span>
                   </Button>
                 </div>
                 <Textarea
@@ -645,20 +743,32 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                   value={formData.targetAudience}
                   onChange={(e) => handleInputChange('targetAudience', e.target.value)}
                   rows={3}
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium">SEO Keywords</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <Search className="h-4 w-4 text-emerald-500 mr-1" />
+                    SEO Keywords
+                  </label>
                   <Button 
                     type="button" 
                     size="sm" 
                     variant="outline"
                     onClick={generateSEOKeywords}
                     disabled={!formData.mainKeyword || isGeneratingKeywords}
+                    className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                   >
-                    {isGeneratingKeywords ? <Spinner size="sm" /> : 'Generate'}
+                    {isGeneratingKeywords ? (
+                      <CustomSpinner />
+                    ) : (
+                      <Sparkles className="h-3 w-3 mr-1" />
+                    )}
+                    <span className="ml-1">{isGeneratingKeywords ? 'Generating...' : 'Generate'}</span>
                   </Button>
                 </div>
                 <Textarea
@@ -666,21 +776,33 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                   value={formData.seoKeywords}
                   onChange={(e) => handleInputChange('seoKeywords', e.target.value)}
                   rows={3}
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
               
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
               {/* New Long Tail Keywords Component */}
-              <div className="flex flex-col space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium">Long Tail Keywords</label>
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <Search className="h-4 w-4 text-emerald-500 mr-1" />
+                    Long Tail Keywords
+                  </label>
                   <Button 
                     type="button" 
                     size="sm" 
                     variant="outline"
                     onClick={generateLongTailKeywords}
                     disabled={!formData.mainKeyword || isGeneratingLongTailKeywords}
+                    className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                   >
-                    {isGeneratingLongTailKeywords ? <Spinner size="sm" /> : 'Generate'}
+                    {isGeneratingLongTailKeywords ? (
+                      <CustomSpinner />
+                    ) : (
+                      <Sparkles className="h-3 w-3 mr-1" />
+                    )}
+                    <span className="ml-1">{isGeneratingLongTailKeywords ? 'Generating...' : 'Generate'}</span>
                   </Button>
                 </div>
                 <Textarea
@@ -688,20 +810,32 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                   value={formData.longTailKeywords}
                   onChange={(e) => handleInputChange('longTailKeywords', e.target.value)}
                   rows={3}
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium">FAQs</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <HelpCircle className="h-4 w-4 text-emerald-500 mr-1" />
+                    FAQs
+                  </label>
                   <Button 
                     type="button" 
                     size="sm" 
                     variant="outline"
                     onClick={generateFAQs}
                     disabled={!formData.mainKeyword || isGeneratingFAQs}
+                    className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                   >
-                    {isGeneratingFAQs ? <Spinner size="sm" /> : 'Generate'}
+                    {isGeneratingFAQs ? (
+                      <CustomSpinner />
+                    ) : (
+                      <Sparkles className="h-3 w-3 mr-1" />
+                    )}
+                    <span className="ml-1">{isGeneratingFAQs ? 'Generating...' : 'Generate'}</span>
                   </Button>
                 </div>
                 <Textarea
@@ -709,16 +843,23 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                   value={formData.faqs}
                   onChange={(e) => handleInputChange('faqs', e.target.value)}
                   rows={5}
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium">Additional Instructions</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Info className="h-4 w-4 text-emerald-500 mr-1" />
+                  Additional Instructions
+                </label>
                 <Textarea
                   placeholder="Any additional instructions for the content"
                   value={formData.additionalInstructions}
                   onChange={(e) => handleInputChange('additionalInstructions', e.target.value)}
                   rows={4}
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
             </CardContent>
@@ -726,22 +867,31 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         </Card>
 
         {/* Core Settings Section */}
-        <Card className="w-full">
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('coreSettings')}>
-            <div className="flex justify-between items-center">
-              <CardTitle>Core Settings</CardTitle>
+        <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+          <CardHeader 
+            className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+            onClick={() => toggleSection('coreSettings')}
+          >
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+                <SectionIcon icon={Settings} />
+                Core Settings
+              </CardTitle>
               {expandedSections.coreSettings ? 
-                <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+                <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
               }
             </div>
           </CardHeader>
           {expandedSections.coreSettings && (
-            <CardContent className="space-y-4">
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium">Article Type</label>
+            <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
+              <div className="mb-5">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <BookOpen className="h-4 w-4 text-emerald-500 mr-1" />
+                  Article Type
+                </label>
                 <select
-                  className="border rounded-md p-2"
+                  className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                   value={formData.articleType}
                   onChange={(e) => handleInputChange('articleType', e.target.value)}
                 >
@@ -759,10 +909,15 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                 </select>
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium">Article Size</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <FileText className="h-4 w-4 text-emerald-500 mr-1" />
+                  Article Size
+                </label>
                 <select
-                  className="border rounded-md p-2"
+                  className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                   value={formData.wordCount}
                   onChange={(e) => handleInputChange('wordCount', e.target.value)}
                 >
@@ -773,13 +928,18 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                 </select>
               </div>
               
-              <div className="flex flex-col space-y-1.5">
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium">Tone of voice</label>
-                  <span className="text-gray-400 text-sm">0/50</span>
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <AlignLeft className="h-4 w-4 text-emerald-500 mr-1" />
+                    Tone of voice
+                  </label>
+                  <span className="text-xs py-1 px-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">0/50</span>
                 </div>
                 <select
-                  className="border rounded-md p-2"
+                  className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                   value={formData.tone}
                   onChange={(e) => handleInputChange('tone', e.target.value)}
                 >
@@ -799,10 +959,15 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                 </select>
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium">Point of View</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Users className="h-4 w-4 text-emerald-500 mr-1" />
+                  Point of View
+                </label>
                 <select
-                  className="border rounded-md p-2"
+                  className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                   value={formData.pointOfView}
                   onChange={(e) => handleInputChange('pointOfView', e.target.value)}
                 >
@@ -813,13 +978,19 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                 </select>
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium">Brand Voice</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Zap className="h-4 w-4 text-emerald-500 mr-1" />
+                  Brand Voice
+                </label>
                 <Textarea
                   placeholder="Describe your brand voice"
                   value={formData.brandVoice}
                   onChange={(e) => handleInputChange('brandVoice', e.target.value)}
                   rows={3}
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
             </CardContent>
@@ -827,26 +998,40 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         </Card>
 
         {/* Text Settings Section */}
-        <Card className="w-full">
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('textSettings')}>
-            <div className="flex justify-between items-center">
-              <CardTitle>Text Settings</CardTitle>
+        <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+          <CardHeader 
+            className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+            onClick={() => toggleSection('textSettings')}
+          >
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+                <SectionIcon icon={Type} />
+                Text Settings
+              </CardTitle>
               {expandedSections.textSettings ? 
-                <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+                <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
               }
             </div>
           </CardHeader>
           {expandedSections.textSettings && (
-            <CardContent className="space-y-4">
-              <div className="flex flex-col space-y-1.5">
+            <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
+              <div className="mb-5">
                 <div className="flex items-center mb-2">
-                  <label className="text-sm font-medium">Text Readability</label>
-                  <HelpCircle className="h-4 w-4 text-gray-400 ml-1" />
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <Type className="h-4 w-4 text-emerald-500 mr-1" />
+                    Text Readability
+                  </label>
+                  <div className="ml-1 group relative">
+                    <HelpCircle className="h-4 w-4 text-emerald-500 cursor-help" />
+                    <div className="absolute left-0 -bottom-1 transform translate-y-full w-64 bg-white p-2 rounded-md shadow-md border border-emerald-200 hidden group-hover:block text-xs text-gray-600 z-10">
+                      Readability level determines how easy your content is to understand for different audience levels.
+                    </div>
+                  </div>
                 </div>
                 <div className="relative">
                   <select
-                    className="border rounded-md p-2 w-full"
+                    className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all pr-24"
                     value={formData.textReadability || "8th & 9th grade"}
                     onChange={(e) => handleInputChange('textReadability', e.target.value)}
                   >
@@ -861,19 +1046,29 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     <option value="Professional">Professional, extremely difficult to read</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <span className="text-xs text-gray-400">Recommended</span>
+                    <span className="text-xs py-1 px-2 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">Recommended</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex flex-col space-y-1.5">
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
                 <div className="flex items-center mb-2">
-                  <label className="text-sm font-medium">AI Content Cleaning</label>
-                  <HelpCircle className="h-4 w-4 text-gray-400 ml-1" />
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <Sparkles className="h-4 w-4 text-emerald-500 mr-1" />
+                    AI Content Cleaning
+                  </label>
+                  <div className="ml-1 group relative">
+                    <HelpCircle className="h-4 w-4 text-emerald-500 cursor-help" />
+                    <div className="absolute left-0 -bottom-1 transform translate-y-full w-64 bg-white p-2 rounded-md shadow-md border border-emerald-200 hidden group-hover:block text-xs text-gray-600 z-10">
+                      Removes patterns and phrases that are commonly associated with AI-generated content.
+                    </div>
+                  </div>
                 </div>
                 <div className="relative">
                   <select
-                    className="border rounded-md p-2 w-full"
+                    className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                     value={formData.aiContentCleaning || "No AI Words Removal"}
                     onChange={(e) => handleInputChange('aiContentCleaning', e.target.value)}
                   >
@@ -888,28 +1083,34 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         </Card>
 
         {/* SEO Section */}
-        <Card className="w-full">
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('seoSettings')}>
-            <div className="flex justify-between items-center">
-              <CardTitle>SEO Settings</CardTitle>
+        <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+          <CardHeader 
+            className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+            onClick={() => toggleSection('seoSettings')}
+          >
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+                <SectionIcon icon={Search} />
+                SEO Settings
+              </CardTitle>
               {expandedSections.seoSettings ? 
-                <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+                <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
               }
             </div>
           </CardHeader>
           {expandedSections.seoSettings && (
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     id="includeBold"
                     checked={formData.includeBold}
                     onChange={(e) => handleCheckboxChange('includeBold', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeBold" className="text-sm">Include Bold Keywords</label>
+                  <label htmlFor="includeBold" className="ml-2 text-sm text-gray-700">Include Bold Keywords</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -918,9 +1119,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeH3"
                     checked={formData.includeH3}
                     onChange={(e) => handleCheckboxChange('includeH3', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeH3" className="text-sm">Include H3 Tags</label>
+                  <label htmlFor="includeH3" className="ml-2 text-sm text-gray-700">Include H3 Tags</label>
                 </div>
               </div>
             </CardContent>
@@ -928,22 +1129,31 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         </Card>
 
         {/* Structure Section with Enhanced Hook Selection */}
-        <Card className="w-full">
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('structure')}>
-            <div className="flex justify-between items-center">
-              <CardTitle>Structure</CardTitle>
+        <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+          <CardHeader 
+            className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+            onClick={() => toggleSection('structure')}
+          >
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+                <SectionIcon icon={LayoutList} />
+                Structure
+              </CardTitle>
               {expandedSections.structure ? 
-                <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+                <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
               }
             </div>
           </CardHeader>
           {expandedSections.structure && (
-            <CardContent className="space-y-4">
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium">Introductory Hook Type</label>
+            <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
+              <div className="mb-5">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Lightbulb className="h-4 w-4 text-emerald-500 mr-1" />
+                  Introductory Hook Type
+                </label>
                 <select
-                  className="border rounded-md p-2"
+                  className="w-full py-2 px-3 border border-emerald-300 rounded-md focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 transition-all"
                   value={formData.introductoryHook}
                   onChange={handleHookTypeChange}
                 >
@@ -956,14 +1166,19 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                 </select>
               </div>
               
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium">Hook Instructions</label>
+              <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+              
+              <div className="mb-5">
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <AlignLeft className="h-4 w-4 text-emerald-500 mr-1" />
+                  Hook Instructions
+                </label>
                 <Textarea
                   placeholder="Instructions for the hook"
                   value={formData.customHook}
                   onChange={(e) => handleInputChange('customHook', e.target.value)}
                   rows={4}
-                  className="border rounded-md p-2 resize-y"
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
             </CardContent>
@@ -971,18 +1186,24 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         </Card>
 
         {/* Document Elements Section */}
-        <Card className="w-full">
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('documentElements')}>
-            <div className="flex justify-between items-center">
-              <CardTitle>Document Elements</CardTitle>
+        <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+          <CardHeader 
+            className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+            onClick={() => toggleSection('documentElements')}
+          >
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+                <SectionIcon icon={ListChecks} />
+                Document Elements
+              </CardTitle>
               {expandedSections.documentElements ? 
-                <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+                <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
               }
             </div>
           </CardHeader>
           {expandedSections.documentElements && (
-            <CardContent>
+            <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="flex items-center">
                   <input
@@ -990,9 +1211,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeConclusion"
                     checked={formData.includeConclusion}
                     onChange={(e) => handleCheckboxChange('includeConclusion', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeConclusion" className="text-sm">Include Conclusion</label>
+                  <label htmlFor="includeConclusion" className="ml-2 text-sm text-gray-700">Include Conclusion</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -1001,9 +1222,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeTables"
                     checked={formData.includeTables}
                     onChange={(e) => handleCheckboxChange('includeTables', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeTables" className="text-sm">Include Tables</label>
+                  <label htmlFor="includeTables" className="ml-2 text-sm text-gray-700">Include Tables</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -1012,9 +1233,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeH3"
                     checked={formData.includeH3}
                     onChange={(e) => handleCheckboxChange('includeH3', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeH3" className="text-sm">Include H3 Subheadings</label>
+                  <label htmlFor="includeH3" className="ml-2 text-sm text-gray-700">Include H3 Subheadings</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -1023,9 +1244,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeLists"
                     checked={formData.includeLists}
                     onChange={(e) => handleCheckboxChange('includeLists', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeLists" className="text-sm">Include Lists</label>
+                  <label htmlFor="includeLists" className="ml-2 text-sm text-gray-700">Include Lists</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -1034,9 +1255,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeItalics"
                     checked={formData.includeItalics}
                     onChange={(e) => handleCheckboxChange('includeItalics', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeItalics" className="text-sm">Include Italics</label>
+                  <label htmlFor="includeItalics" className="ml-2 text-sm text-gray-700">Include Italics</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -1045,9 +1266,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeQuotes"
                     checked={formData.includeQuotes}
                     onChange={(e) => handleCheckboxChange('includeQuotes', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeQuotes" className="text-sm">Include Quotes</label>
+                  <label htmlFor="includeQuotes" className="ml-2 text-sm text-gray-700">Include Quotes</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -1056,9 +1277,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeKeyTakeaways"
                     checked={formData.includeKeyTakeaways}
                     onChange={(e) => handleCheckboxChange('includeKeyTakeaways', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeKeyTakeaways" className="text-sm">Include Key Takeaways</label>
+                  <label htmlFor="includeKeyTakeaways" className="ml-2 text-sm text-gray-700">Include Key Takeaways</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -1067,9 +1288,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeFAQs"
                     checked={formData.includeFAQs}
                     onChange={(e) => handleCheckboxChange('includeFAQs', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeFAQs" className="text-sm">Include FAQs Section</label>
+                  <label htmlFor="includeFAQs" className="ml-2 text-sm text-gray-700">Include FAQs Section</label>
                 </div>
                 
                 <div className="flex items-center">
@@ -1078,9 +1299,9 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                     id="includeBold"
                     checked={formData.includeBold}
                     onChange={(e) => handleCheckboxChange('includeBold', e.target.checked)}
-                    className="mr-2 h-4 w-4"
+                    className="h-4 w-4 text-emerald-500 focus:ring-emerald-400 border-gray-300 rounded"
                   />
-                  <label htmlFor="includeBold" className="text-sm">Include Bold Text</label>
+                  <label htmlFor="includeBold" className="ml-2 text-sm text-gray-700">Include Bold Text</label>
                 </div>
               </div>
             </CardContent>
@@ -1088,57 +1309,84 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         </Card>
 
         {/* Internal Linking Section */}
-        <Card className="w-full">
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('internalLinking')}>
-            <div className="flex justify-between items-center">
-              <CardTitle>Internal Linking</CardTitle>
+        <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+          <CardHeader 
+            className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+            onClick={() => toggleSection('internalLinking')}
+          >
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+                <SectionIcon icon={Link} />
+                Internal Linking
+              </CardTitle>
               {expandedSections.internalLinking ? 
-                <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+                <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
               }
             </div>
           </CardHeader>
           {expandedSections.internalLinking && (
-            <CardContent>
+            <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
               <div className="space-y-4">
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium">Website URL</label>
+                <div className="mb-5">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Globe className="h-4 w-4 text-emerald-500 mr-1" />
+                    Website URL
+                  </label>
                   <Input
                     placeholder="Your website URL (e.g., https://example.com)"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
+                    className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                   />
                 </div>
                 
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium">Website URLs/Sitemap</label>
+                <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+                
+                <div className="mb-5">
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                    <Link className="h-4 w-4 text-emerald-500 mr-1" />
+                    Website URLs/Sitemap
+                  </label>
                   <Textarea
                     placeholder="Paste your website URLs or sitemap content here"
                     value={websiteUrls}
                     onChange={(e) => setWebsiteUrls(e.target.value)}
                     rows={4}
+                    className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                   />
                 </div>
                 
+                <div className="h-px bg-gradient-to-r from-emerald-200 to-transparent my-5"></div>
+                
                 <div className="flex justify-between items-start">
                   <div className="flex flex-col space-y-1.5 flex-1">
-                    <label className="text-sm font-medium">Internal Links</label>
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                      <Link className="h-4 w-4 text-emerald-500 mr-1" />
+                      Internal Links
+                    </label>
                     <Textarea
                       placeholder="Internal links for your content"
                       value={formData.internalLinkingWebsite}
                       onChange={(e) => handleInputChange('internalLinkingWebsite', e.target.value)}
                       rows={4}
+                      className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                     />
                   </div>
                   <Button 
                     type="button" 
                     size="sm" 
                     variant="outline"
-                    className="mt-6 ml-2"
+                    className="mt-8 ml-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                     onClick={generateInternalLinks}
                     disabled={!formData.mainKeyword || !websiteUrl || !websiteUrls || isGeneratingInternalLinks}
                   >
-                    {isGeneratingInternalLinks ? <Spinner size="sm" /> : 'Generate'}
+                    {isGeneratingInternalLinks ? (
+                      <CustomSpinner />
+                    ) : (
+                      <Sparkles className="h-3 w-3 mr-1" />
+                    )}
+                    <span className="ml-1">{isGeneratingInternalLinks ? 'Generating...' : 'Generate'}</span>
                   </Button>
                 </div>
               </div>
@@ -1147,29 +1395,44 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
         </Card>
 
         {/* External Linking Section */}
-        <Card className="w-full">
-          <CardHeader className="cursor-pointer" onClick={() => toggleSection('externalLinking')}>
-            <div className="flex justify-between items-center">
-              <CardTitle>External Linking</CardTitle>
+        <Card className="w-full border border-emerald-200 shadow-md hover:shadow-lg transition-shadow rounded-xl overflow-hidden">
+          <CardHeader 
+            className="cursor-pointer bg-gradient-to-r from-emerald-50 to-transparent border-b border-emerald-100"
+            onClick={() => toggleSection('externalLinking')}
+          >
+            <div className="flex justify-between items-center w-full">
+              <CardTitle className="text-emerald-800 font-semibold flex items-center gap-2">
+                <SectionIcon icon={ExternalLink} />
+                External Linking
+              </CardTitle>
               {expandedSections.externalLinking ? 
-                <ChevronUp className="h-5 w-5 text-gray-400" /> : 
-                <ChevronDown className="h-5 w-5 text-gray-400" />
+                <ChevronUp className="h-5 w-5 text-emerald-500 transition-transform duration-200" /> : 
+                <ChevronDown className="h-5 w-5 text-emerald-500 transition-transform duration-200" />
               }
             </div>
           </CardHeader>
           {expandedSections.externalLinking && (
-            <CardContent>
+            <CardContent className="p-5 animate-[fadeIn_0.3s_ease-in-out]">
               <div className="flex flex-col space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-medium">External Links</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="flex items-center text-sm font-medium text-gray-700">
+                    <ExternalLink className="h-4 w-4 text-emerald-500 mr-1" />
+                    External Links
+                  </label>
                   <Button 
                     type="button" 
                     size="sm" 
                     variant="outline"
                     onClick={generateLinks}
                     disabled={!formData.mainKeyword || isGeneratingLinks}
+                    className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                   >
-                    {isGeneratingLinks ? <Spinner size="sm" /> : 'Generate'}
+                    {isGeneratingLinks ? (
+                      <CustomSpinner />
+                    ) : (
+                      <Sparkles className="h-3 w-3 mr-1" />
+                    )}
+                    <span className="ml-1">{isGeneratingLinks ? 'Generating...' : 'Generate'}</span>
                   </Button>
                 </div>
                 <Textarea
@@ -1177,6 +1440,7 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
                   value={formData.externalLinkType}
                   onChange={(e) => handleInputChange('externalLinkType', e.target.value)}
                   rows={4}
+                  className="border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200"
                 />
               </div>
             </CardContent>
@@ -1188,13 +1452,17 @@ export const ContentCreatorForm: React.FC<ContentCreatorFormProps> = ({
           <Button
             type="submit"
             disabled={isGenerating || !formData.mainKeyword}
-            className="min-w-[150px]"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-md min-w-[150px] flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-md group"
           >
             {isGenerating ? (
               <div className="flex items-center gap-2">
-                <Spinner /> Generating...
+                <CustomSpinner /> Generating...
               </div>
-            ) : 'Generate Prompt'}
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 group-hover:scale-110 transition-transform" /> Generate Prompt
+              </>
+            )}
           </Button>
         </div>
       </form>
